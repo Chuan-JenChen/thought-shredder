@@ -21,7 +21,7 @@
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-between p-6 select-none overflow-hidden">
 
-  <!-- V1.1 新增：每日卸甲金句 -->
+  <!-- 每日卸甲金句區塊 -->
   <header class="w-full max-w-md pt-8 text-center fade-in z-10">
     <h1 class="text-xs font-medium tracking-widest text-neutral-500 mb-4">TODAY'S SHIELD</h1>
     <div class="bg-neutral-900/50 border border-neutral-800/60 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
@@ -29,10 +29,10 @@
     </div>
   </header>
 
-  <!-- 核心操作區 (維持原樣) -->
   <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center relative">
     <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-20"></canvas>
     
+    <!-- 輸入區塊 -->
     <div id="inputCard" class="w-full bg-[#161822] border border-neutral-800/80 rounded-2xl p-5 shadow-2xl transition-all duration-700 z-10 mt-6">
       <textarea id="thoughtInput" rows="4" placeholder="今天有什麼煩心事？主管的臉色、莫名的委屈...丟進來粉碎吧。" class="w-full bg-transparent text-sm text-neutral-200 placeholder-neutral-500 resize-none font-light leading-relaxed"></textarea>
       <div class="flex justify-between items-center mt-3 pt-3 border-t border-neutral-800/40">
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <!-- 釋放完成卡片 -->
+    <!-- 完成畫面卡片 -->
     <div id="peaceCard" class="opacity-0 pointer-events-none absolute transition-opacity duration-1000 text-center z-10">
       <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 text-lg">✓</div>
       <h2 class="text-base font-normal text-neutral-200">今天到此為止</h2>
@@ -57,7 +57,7 @@
   </footer>
 
   <script>
-    // --- V1.1 每日金句邏輯 ---
+    // 每日金句系統
     const quotes = [
       "上班只是演一齣領薪水的戲，演得剛剛好及格就行。今天不要拿別人的情緒來懲罰自己。",
       "今天看什麼都不順眼是正常的。這不是妳脾氣差，只是身體累了。今天不用反省自己，想吃甜的就去買。",
@@ -66,7 +66,6 @@
       "剛剛那個尷尬的瞬間，其實除了妳之外，沒有人會記得。放過自己吧，明天又是新的一天。"
     ];
 
-    // 利用當天日期的數字來決定顯示哪一句，確保同一天內每次打開看到的都一樣
     function loadDailyQuote() {
       const today = new Date();
       const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
@@ -75,7 +74,7 @@
     }
     loadDailyQuote();
 
-    // --- 音效與粉碎系統 (與之前相同) ---
+    // 聲音系統 (432Hz 頌缽)
     let audioCtx = null;
     function playSingingBowl() {
       try {
@@ -95,6 +94,7 @@
       } catch (e) { console.log("Audio skipped"); }
     }
 
+    // 粒子粉碎系統
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
@@ -127,26 +127,66 @@
       if (particles.length > 0) requestAnimationFrame(animateParticles);
     }
 
-    function handleShred() {
+    // 串接 AI 與粉碎流程控制
+    async function handleShred() {
       const input = document.getElementById('thoughtInput');
-      if (!input.value.trim()) return;
+      const shredBtn = document.getElementById('shredBtn');
+      const thought = input.value.trim();
+      if (!thought) return;
+
+      shredBtn.innerHTML = '<span class="animate-pulse">讀取中...</span>';
+      shredBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ thought })
+        });
+        const data = await response.json();
+
+        // 替換成 AI 回覆文字並改變顏色
+        input.value = `AI 閨蜜：\n「 ${data.reply.trim()} 」`;
+        input.style.color = '#10b981'; 
+        
+        // 給予 3.5 秒的閱讀時間再粉碎
+        setTimeout(() => {
+          executeShreddingAnimation(input, shredBtn);
+        }, 3500);
+
+      } catch (e) {
+        executeShreddingAnimation(input, shredBtn);
+      }
+    }
+
+    // 執行粉碎動畫與震動
+    function executeShreddingAnimation(input, shredBtn) {
       if (navigator.vibrate) navigator.vibrate([40, 60, 100]);
       playSingingBowl();
+      
       const rect = input.getBoundingClientRect();
       const parentRect = canvas.getBoundingClientRect();
       createParticles(rect.left - parentRect.left + rect.width / 2, rect.top - parentRect.top + rect.height / 2);
       animateParticles();
+      
       const inputCard = document.getElementById('inputCard');
       inputCard.style.transform = 'scale(0.8) translateY(-20px)';
       inputCard.style.opacity = '0';
       inputCard.style.pointerEvents = 'none';
+      
       setTimeout(() => {
         const peaceCard = document.getElementById('peaceCard');
         peaceCard.classList.remove('opacity-0', 'pointer-events-none');
         peaceCard.classList.add('opacity-100');
+        
+        // 復原初始狀態
+        shredBtn.innerHTML = '<span>粉碎丟棄</span><span class="text-xs">⚡</span>';
+        shredBtn.disabled = false;
+        input.style.color = ''; 
       }, 700);
     }
 
+    // 重新開始另一輪
     function resetView() {
       document.getElementById('thoughtInput').value = '';
       const peaceCard = document.getElementById('peaceCard');
