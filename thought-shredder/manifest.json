@@ -1,0 +1,8 @@
+{
+  "name": "深夜避難所",
+  "short_name": "避難所",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0d12",
+  "theme_color": "#0c0d12"
+}
