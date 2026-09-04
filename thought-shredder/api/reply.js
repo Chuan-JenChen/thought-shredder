@@ -1,11 +1,9 @@
 export default async function handler(req, res) {
-  // 檢查是否為 POST 請求
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
   const { thought } = req.body;
   const apiKey = process.env.GEMINI_API_KEY;
 
-  // 定義 AI 的人設與系統提示詞
   const systemPrompt = `妳現在是一位充滿同理心、說話直接且溫暖的台灣女性閨蜜。
 使用者會告訴妳一件煩心事。妳的任務是：
 1. 站在她那邊，用 1 到 2 句話簡單安撫或跟著吐槽。
@@ -13,7 +11,8 @@ export default async function handler(req, res) {
 3. 字數絕對不可超過 40 字，簡短有力。`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+    // 使用 gemini-2.5-flash 模型
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -23,7 +22,12 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     
-    // 安全防呆檢查：確保各層結構都有抓到資料
+    // 檢查是否有回傳錯誤
+    if (data.error) {
+      console.error("Gemini API 內部錯誤:", data.error);
+      return res.status(200).json({ reply: "沒事的，深呼吸，我們把它碎掉就好。" });
+    }
+
     const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!replyText) {
