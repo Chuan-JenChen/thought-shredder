@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 3. 字數絕對不可超過 40 字，簡短有力。`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -22,12 +22,18 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    const replyText = data.candidates[0].content.parts[0].text;
+    
+    // 安全防呆檢查：確保各層結構都有抓到資料
+    const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!replyText) {
+      console.error("Gemini API 回傳結構異常:", JSON.stringify(data));
+      return res.status(200).json({ reply: "沒事的，深呼吸，我們把它碎掉就好。" });
+    }
     
     res.status(200).json({ reply: replyText });
   } catch (error) {
-    console.error(error);
-    // 萬一網路或 API 出錯的備用安撫文字
+    console.error("API 呼叫失敗:", error);
     res.status(200).json({ reply: "沒事的，深呼吸，我們把它碎掉就好。" }); 
   }
 }
