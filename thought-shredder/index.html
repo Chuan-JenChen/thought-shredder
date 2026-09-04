@@ -2,12 +2,8 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>思維粉碎機 | 睡前避難所</title>
-  <!-- Tailwind CSS CDN 用於快速排版 -->
+  <title>思維粉碎機 | 深夜避難所</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -15,122 +11,105 @@
       color: #e2e8f0;
       touch-action: manipulation;
     }
-    textarea:focus {
-      outline: none;
-    }
+    textarea:focus { outline: none; }
+    .fade-in { animation: fadeIn 1.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-between p-6 select-none overflow-hidden">
 
-  <!-- 頂部文案 -->
-  <header class="w-full max-w-md pt-8 text-center">
-    <h1 class="text-sm font-medium tracking-widest text-neutral-400">深夜避難所</h1>
-    <p class="text-xs text-neutral-400 mt-1">把今天卡在腦子裡的雜音，留在這裡</p>
+  <!-- V1.1 新增：每日卸甲金句 -->
+  <header class="w-full max-w-md pt-8 text-center fade-in z-10">
+    <h1 class="text-xs font-medium tracking-widest text-neutral-500 mb-4">TODAY'S SHIELD</h1>
+    <div class="bg-neutral-900/50 border border-neutral-800/60 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
+      <p id="dailyQuoteText" class="text-sm text-neutral-300 leading-relaxed font-light"></p>
+    </div>
   </header>
 
-  <!-- 核心操作區 -->
+  <!-- 核心操作區 (維持原樣) -->
   <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center relative">
-    
-    <!-- Canvas 粒子爆炸畫布 -->
     <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-20"></canvas>
-
-    <!-- 輸入區域 -->
-    <div id="inputCard" class="w-full bg-[#161822] border border-neutral-800/80 rounded-2xl p-5 shadow-2xl transition-all duration-700 z-10">
-      <textarea 
-        id="thoughtInput" 
-        rows="5" 
-        placeholder="今天在煩什麼？主管的一句話、沒做完的事、或是莫名其妙的委屈...隨便打，不用通順。" 
-        class="w-full bg-transparent text-sm text-neutral-200 placeholder-neutral-400 resize-none font-light leading-relaxed"
-      ></textarea>
+    
+    <div id="inputCard" class="w-full bg-[#161822] border border-neutral-800/80 rounded-2xl p-5 shadow-2xl transition-all duration-700 z-10 mt-6">
+      <textarea id="thoughtInput" rows="4" placeholder="今天有什麼煩心事？主管的臉色、莫名的委屈...丟進來粉碎吧。" class="w-full bg-transparent text-sm text-neutral-200 placeholder-neutral-500 resize-none font-light leading-relaxed"></textarea>
       <div class="flex justify-between items-center mt-3 pt-3 border-t border-neutral-800/40">
-        <span class="text-[11px] text-neutral-400">寫完即焚 · 不留紀錄</span>
-        <button 
-          id="shredBtn" 
-          onclick="handleShred()"
-          class="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-xs text-neutral-300 font-medium rounded-xl transition-all flex items-center gap-1.5"
-        >
-          <span>粉碎丟棄</span>
-          <span class="text-xs">⚡</span>
+        <span class="text-[11px] text-neutral-500">寫完即焚 · 不留紀錄</span>
+        <button id="shredBtn" onclick="handleShred()" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-xs text-neutral-300 font-medium rounded-xl transition-all flex items-center gap-1.5">
+          <span>粉碎丟棄</span><span class="text-xs">⚡</span>
         </button>
       </div>
     </div>
 
-    <!-- 釋放完成卡片（預設隱藏） -->
-    <div id="peaceCard" class="opacity-0 pointer-events-none transition-opacity duration-1000 text-center z-10">
-      <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 text-lg">
-        ✓
-      </div>
+    <!-- 釋放完成卡片 -->
+    <div id="peaceCard" class="opacity-0 pointer-events-none absolute transition-opacity duration-1000 text-center z-10">
+      <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 text-lg">✓</div>
       <h2 class="text-base font-normal text-neutral-200">今天到此為止</h2>
-      <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">
-        妳已經撐過今天了。<br>這些破事不值得佔用妳寶貴的睡眠。
-      </p>
-      <button 
-        onclick="resetView()" 
-        class="mt-8 px-5 py-2 border border-neutral-800 rounded-full text-xs text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 transition"
-      >
-        還有煩惱想碎掉
-      </button>
+      <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">妳已經撐過今天了。<br>這些破事不值得佔用妳寶貴的睡眠。</p>
+      <button onclick="resetView()" class="mt-8 px-5 py-2 border border-neutral-800 rounded-full text-xs text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 transition">還有煩惱想碎掉</button>
     </div>
-
   </main>
 
-  <!-- 底部溫馨提示 -->
-  <footer class="w-full max-w-md pb-6 text-center">
-    <p class="text-[11px] text-neutral-400">深呼吸 · 鑽進被窩 · 安心睡覺</p>
+  <footer class="w-full max-w-md pb-6 text-center z-10">
+    <p class="text-[11px] text-neutral-500 tracking-wider">深呼吸 · 鑽進被窩 · 安心睡覺</p>
   </footer>
 
   <script>
-    // 初始化音效 (Web Audio API 合成輕柔低頻頌缽聲，免依賴外部音檔)
+    // --- V1.1 每日金句邏輯 ---
+    const quotes = [
+      "上班只是演一齣領薪水的戲，演得剛剛好及格就行。今天不要拿別人的情緒來懲罰自己。",
+      "今天看什麼都不順眼是正常的。這不是妳脾氣差，只是身體累了。今天不用反省自己，想吃甜的就去買。",
+      "今天做不完的事，代表今天根本不該做完。妳已經撐了一整天，被窩現在完全屬於妳。",
+      "不用對每個人的期待負責，妳的首要任務是討好妳自己。",
+      "剛剛那個尷尬的瞬間，其實除了妳之外，沒有人會記得。放過自己吧，明天又是新的一天。"
+    ];
+
+    // 利用當天日期的數字來決定顯示哪一句，確保同一天內每次打開看到的都一樣
+    function loadDailyQuote() {
+      const today = new Date();
+      const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+      const quoteIndex = dayOfYear % quotes.length;
+      document.getElementById('dailyQuoteText').innerText = `「 ${quotes[quoteIndex]} 」`;
+    }
+    loadDailyQuote();
+
+    // --- 音效與粉碎系統 (與之前相同) ---
     let audioCtx = null;
     function playSingingBowl() {
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
-
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(432, audioCtx.currentTime); // 432Hz 療癒頻率
+        osc.frequency.setValueAtTime(432, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(108, audioCtx.currentTime + 3.5);
-
         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3.5);
-
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-
         osc.start();
         osc.stop(audioCtx.currentTime + 3.5);
-      } catch (e) {
-        console.log("Audio not supported or allowed yet");
-      }
+      } catch (e) { console.log("Audio skipped"); }
     }
 
-    // 粒子粉碎系統
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
-
-    function resizeCanvas() {
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
-    }
+    function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    function createParticles(x, y, count = 120) {
-      for (let i = 0; i < count; i++) {
+    function createParticles(x, y) {
+      for (let i = 0; i < 120; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 6 + 2;
         particles.push({
-          x: x,
-          y: y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 2, // 略微向上拋散
-          size: Math.random() * 2.5 + 1,
-          alpha: 1,
-          decay: Math.random() * 0.02 + 0.015,
+          x: x, y: y,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
+          size: Math.random() * 2.5 + 1, alpha: 1, decay: Math.random() * 0.02 + 0.015,
           color: Math.random() > 0.4 ? '#a3a3a3' : '#e2e8f0'
         });
       }
@@ -140,52 +119,27 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.1; // 重力微墜
-        p.alpha -= p.decay;
-
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, p.alpha);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-        ctx.restore();
-
+        p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.alpha -= p.decay;
+        ctx.save(); ctx.globalAlpha = Math.max(0, p.alpha); ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size); ctx.restore();
         if (p.alpha <= 0) particles.splice(i, 1);
       }
       if (particles.length > 0) requestAnimationFrame(animateParticles);
     }
 
-    // 核心觸發流程
     function handleShred() {
       const input = document.getElementById('thoughtInput');
-      const text = input.value.trim();
-      if (!text) return;
-
-      // 1. 觸發手機震動 (如果裝置支援)
-      if (navigator.vibrate) {
-        navigator.vibrate([40, 60, 100]);
-      }
-
-      // 2. 播放放鬆頌缽聲
+      if (!input.value.trim()) return;
+      if (navigator.vibrate) navigator.vibrate([40, 60, 100]);
       playSingingBowl();
-
-      // 3. 觸發粒子動畫
       const rect = input.getBoundingClientRect();
       const parentRect = canvas.getBoundingClientRect();
-      const originX = rect.left - parentRect.left + rect.width / 2;
-      const originY = rect.top - parentRect.top + rect.height / 2;
-      
-      createParticles(originX, originY);
+      createParticles(rect.left - parentRect.left + rect.width / 2, rect.top - parentRect.top + rect.height / 2);
       animateParticles();
-
-      // 4. 卡片撕裂淡出動效
       const inputCard = document.getElementById('inputCard');
       inputCard.style.transform = 'scale(0.8) translateY(-20px)';
       inputCard.style.opacity = '0';
       inputCard.style.pointerEvents = 'none';
-
-      // 5. 顯示釋放完成狀態
       setTimeout(() => {
         const peaceCard = document.getElementById('peaceCard');
         peaceCard.classList.remove('opacity-0', 'pointer-events-none');
@@ -194,15 +148,12 @@
     }
 
     function resetView() {
-      const input = document.getElementById('thoughtInput');
-      const inputCard = document.getElementById('inputCard');
+      document.getElementById('thoughtInput').value = '';
       const peaceCard = document.getElementById('peaceCard');
-
-      input.value = '';
       peaceCard.classList.remove('opacity-100');
       peaceCard.classList.add('opacity-0', 'pointer-events-none');
-
       setTimeout(() => {
+        const inputCard = document.getElementById('inputCard');
         inputCard.style.transform = 'scale(1) translateY(0)';
         inputCard.style.opacity = '1';
         inputCard.style.pointerEvents = 'auto';
@@ -210,4 +161,4 @@
     }
   </script>
 </body>
-</html>asd
+</html>
