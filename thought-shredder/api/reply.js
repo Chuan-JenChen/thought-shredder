@@ -11,8 +11,7 @@ export default async function handler(req, res) {
 3. 字數絕對不可超過 40 字，簡短有力。`;
 
   try {
-    // 使用 gemini-2.5-flash 模型
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -20,24 +19,39 @@ export default async function handler(req, res) {
       })
     });
 
-    const data = await response.json();
-    
-    // 檢查是否有回傳錯誤
-    if (data.error) {
-      console.error("Gemini API 內部錯誤:", data.error);
-      return res.status(200).json({ reply: "沒事的，深呼吸，我們把它碎掉就好。" });
+    if (!response.ok) {
+      return res.status(200).send("沒事的，深呼吸，我們把它碎掉就好。");
     }
 
-    const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!replyText) {
-      console.error("Gemini API 回傳結構異常:", JSON.stringify(data));
-      return res.status(200).json({ reply: "沒事的，深呼吸，我們把它碎掉就好。" });
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const json = JSON.parse(line.substring(6));
+            const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              res.write(text);
+            }
+          } catch (e) {
+            // 忽略未完成的 JSON 片段
+          }
+        }
+      }
     }
-    
-    res.status(200).json({ reply: replyText });
+    res.end();
   } catch (error) {
-    console.error("API 呼叫失敗:", error);
-    res.status(200).json({ reply: "沒事的，深呼吸，我們把它碎掉就好。" }); 
+    res.status(200).send("沒事的，深呼吸，我們把它碎掉就好。");
   }
 }
