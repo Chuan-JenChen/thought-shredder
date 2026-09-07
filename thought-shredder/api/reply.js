@@ -36,34 +36,58 @@ export default async function handler(req, res) {
   "outfitVibe": "建議的戰袍/妝容/氣場指南（例如：全黑墨鏡酷妹裝，讓討厭的人連看妳一眼都覺得自己不配）"
 }`;
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 1.0
-        }
-      })
-    });
+  // 設定模型優先順序清單：首選優先，遇到 High Demand 自動切換備選
+  const candidateModels = [
+    "gemini-2.5-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro"
+  ];
 
-    const data = await response.json();
+  let lastError = null;
 
-    if (!response.ok) {
-      console.error("Gemini API Error:", data);
-      return res.status(500).json({ error: "AI 連線失敗", details: data?.error?.message });
+  for (const model of candidateModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 1.0
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      // 若遇到 High Demand 或非 200，記錄後自動嘗試下一個模型
+      if (!response.ok) {
+        console.warn(`[API] 模型 ${model} 請求受限 (${response.status})，切換備用模型...`, data?.error?.message);
+        lastError = data?.error?.message || `HTTP ${response.status}`;
+        continue;
+      }
+
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) {
+        lastError = "模型回傳空內容";
+        continue;
+      }
+
+      const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleanJson);
+      return res.status(200).json(parsed);
+
+    } catch (err) {
+      console.warn(`[API] 模型 ${model} 調用異常:`, err.message);
+      lastError = err.message;
     }
-
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    return res.status(200).json(JSON.parse(cleanJson));
-
-  } catch (err) {
-    console.error("處理出錯:", err);
-    return res.status(500).json({ error: "閨蜜連線失敗", message: err.message });
   }
+
+  // 若備選模型皆暫時堵塞，回傳乾淨錯誤
+  return res.status(503).json({
+    error: "AI 閨蜜連線壅塞",
+    details: `目前 Google API 流量偏高 (${lastError})，請稍候再點擊重試！`
+  });
 }
