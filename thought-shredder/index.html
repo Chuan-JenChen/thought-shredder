@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>深夜避難所 | 發洩塔羅處方箋</title>
+  <title>深夜避難所 | 塔羅 × 易經東西會診</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -14,11 +14,11 @@
     textarea:focus { outline: none; }
     .fade-in { animation: fadeIn 0.6s ease-in-out; }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(12px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-    /* 3D 翻牌動效 */
+    /* 3D 翻轉卡片容器 */
     .card-container {
       perspective: 1000px;
     }
@@ -26,8 +26,7 @@
       position: relative;
       width: 100%;
       height: 100%;
-      text-align: center;
-      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
       transform-style: preserve-3d;
     }
     .card-inner.flipped {
@@ -49,85 +48,100 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="h-screen w-screen flex flex-col items-center justify-between p-5 select-none overflow-hidden font-sans">
+<body class="h-screen w-screen flex flex-col items-center justify-between p-4 select-none overflow-hidden font-sans">
 
-  <!-- 頂部金句 -->
-  <header class="w-full max-w-md pt-4 text-center z-10">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-[11px] text-rose-400/90 mb-2">
-      <span>✦</span><span>黑化發洩 × 塔羅真理處方</span><span>✦</span>
+  <!-- 頂部標題與金句 -->
+  <header class="w-full max-w-md pt-3 text-center z-10">
+    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-[11px] text-amber-400/90 mb-2">
+      <span>✦</span><span>黑化發洩 × 塔羅三牌陣 × 易經指引</span><span>✦</span>
     </div>
-    <div class="bg-neutral-900/40 border border-neutral-800/60 rounded-xl p-3 backdrop-blur-sm">
+    <div class="bg-neutral-900/40 border border-neutral-800/60 rounded-xl p-2.5 backdrop-blur-sm">
       <p id="dailyQuoteText" class="text-xs text-neutral-400 font-light leading-relaxed"></p>
     </div>
   </header>
 
-  <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center relative my-2">
+  <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center relative my-1">
     <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-30"></canvas>
 
     <!-- 步驟 1：輸入心事區塊 -->
     <div id="stepInput" class="w-full bg-[#161822] border border-neutral-800/90 rounded-2xl p-5 shadow-2xl transition-all duration-500 z-10">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs text-neutral-400 font-medium">傾訴心事與黑化怒氣</span>
-        <span class="text-[11px] text-rose-400/80">心事傾倒槽</span>
+        <span class="text-xs text-neutral-400 font-medium">把今天卡住的心事說出來</span>
+        <span class="text-[11px] text-rose-400/80">心事倒進來</span>
       </div>
-      <textarea id="thoughtInput" rows="4" placeholder="今天遇到什麼爛事？主管發瘋、同事甩鍋、破事一堆...寫下來，準備選一張咒語牌狠狠發洩！" class="w-full bg-transparent text-sm text-neutral-200 placeholder-neutral-600 resize-none font-light leading-relaxed"></textarea>
+      <textarea id="thoughtInput" rows="4" placeholder="今天有什麼煩心事？主管的臉色、莫名的委屈、不知道下一步該怎麼辦...寫下來，準備抽取妳的三張指引牌！" class="w-full bg-transparent text-sm text-neutral-200 placeholder-neutral-600 resize-none font-light leading-relaxed"></textarea>
       
       <div class="flex justify-between items-center mt-3 pt-3 border-t border-neutral-800/50">
-        <span class="text-[11px] text-neutral-500">寫完即焚 · 不留痕跡</span>
-        <button onclick="goToPickStep()" class="px-5 py-2.5 bg-gradient-to-r from-rose-500/90 to-red-600/90 hover:from-rose-500 hover:to-red-600 active:scale-95 text-xs text-white font-semibold rounded-xl transition-all shadow-lg flex items-center gap-1.5">
-          <span>召喚發洩牌卡</span><span>🧨</span>
+        <span class="text-[11px] text-neutral-500">寫完即焚 · 東西會診</span>
+        <button onclick="goToPickStep()" class="px-5 py-2.5 bg-gradient-to-r from-rose-500/90 to-amber-600/90 hover:from-rose-500 hover:to-amber-600 active:scale-95 text-xs text-white font-semibold rounded-xl transition-all shadow-lg flex items-center gap-1.5">
+          <span>召喚發洩牌陣</span><span>🔮</span>
         </button>
       </div>
     </div>
 
-    <!-- 步驟 2：發洩抽牌區塊（背面可愛發洩圖，點擊翻開為正面塔羅牌） -->
+    <!-- 步驟 2：手動抽 3 張牌區塊 -->
     <div id="stepPick" class="hidden opacity-0 w-full transition-all duration-500 z-10 text-center">
-      <h3 class="text-sm font-medium text-rose-300/90 mb-1">想怎麼對付他們？直覺選一張！</h3>
-      <p class="text-[11px] text-neutral-500 mb-4">點擊發洩符咒，翻開屬於妳的正統塔羅真理</p>
+      <div class="flex items-center justify-between px-2 mb-2">
+        <h3 class="text-xs font-semibold text-rose-300" id="pickStatus">請選第 1 張牌：代表「過去根源」</h3>
+        <span class="text-[10px] bg-neutral-800 text-amber-400 px-2 py-0.5 rounded-full border border-neutral-700" id="pickCounter">0 / 3</span>
+      </div>
+      <p class="text-[11px] text-neutral-500 mb-3">背面皆為隨機出氣符咒，點擊翻開顯露命運</p>
       
-      <div class="grid grid-cols-3 gap-2.5 w-full px-1" id="cardsGrid"></div>
+      <!-- 隨機 5 張背面供挑選 3 張 -->
+      <div class="grid grid-cols-3 gap-2 w-full px-1" id="cardsGrid"></div>
       
-      <div id="loadingText" class="hidden text-xs text-amber-400/90 mt-5 animate-pulse">
-        ✦ 塔羅牌已顯現，AI 正在為妳結合心事調配處方箋...
+      <div id="loadingText" class="hidden text-xs text-amber-400/90 mt-4 animate-pulse">
+        ✦ 三牌陣已成，正在結合易經爻象為妳調配解藥...
       </div>
     </div>
 
-    <!-- 步驟 3：處方箋拍立得卡片 -->
+    <!-- 步驟 3：東西跨維度處方箋卡片 -->
     <div id="prescriptionCard" class="opacity-0 pointer-events-none absolute w-full transition-all duration-700 z-20">
-      <div class="w-full bg-gradient-to-b from-[#1c1e2b] to-[#12131c] border border-neutral-700/60 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+      <div class="w-full bg-gradient-to-b from-[#1a1c27] to-[#12131b] border border-neutral-700/60 rounded-2xl p-4 shadow-2xl relative overflow-hidden max-h-[82vh] overflow-y-auto">
         
-        <div class="flex justify-between items-center border-b border-neutral-800/70 pb-2 mb-3">
-          <span class="text-[11px] tracking-wider text-amber-400 font-medium">✦ 翻開塔羅 · 宇宙指引</span>
-          <span id="cardName" class="text-xs font-semibold text-amber-200 bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-800/50"></span>
-        </div>
-
-        <div class="my-3 p-3 rounded-xl bg-amber-950/20 border border-amber-900/30 text-center">
-          <p id="cardEncouragement" class="text-xs text-amber-200/90 font-normal leading-relaxed"></p>
-        </div>
-
-        <div class="mb-3">
-          <div class="text-[11px] text-neutral-400 mb-1 font-medium">【 塔羅牌意與心靈洞察 】</div>
-          <p id="cardInsight" class="text-xs text-neutral-300 font-light leading-relaxed"></p>
-        </div>
-
-        <div class="grid grid-cols-1 gap-2 text-xs pt-2 border-t border-neutral-800/60">
-          <div class="flex items-start gap-2">
-            <span class="text-emerald-400 font-medium whitespace-nowrap">🌿 今日宜：</span>
-            <span id="luckyAction" class="text-neutral-300 font-light"></span>
+        <!-- 頂部卦象與標籤 -->
+        <div class="flex justify-between items-center border-b border-neutral-800/80 pb-2 mb-2">
+          <div class="flex items-center gap-1.5">
+            <span class="text-amber-400 text-sm font-bold" id="cardIching"></span>
+            <span class="text-[10px] bg-amber-950/60 text-amber-300 border border-amber-800/40 px-2 py-0.5 rounded-md">易經卦象</span>
           </div>
-          <div class="flex items-start gap-2">
-            <span class="text-rose-400 font-medium whitespace-nowrap">⚠️ 今日忌：</span>
-            <span id="avoidAction" class="text-neutral-300 font-light"></span>
+          <span class="text-[10px] text-neutral-400">塔羅三牌陣 · 現代解鎖</span>
+        </div>
+
+        <!-- 抽取的三張牌陣小標籤 -->
+        <div class="flex justify-between gap-1.5 mb-2.5 p-2 bg-neutral-900/60 rounded-xl border border-neutral-800 text-center" id="pickedCardsRow"></div>
+
+        <!-- 易經心智指引 -->
+        <div class="mb-2 p-2.5 rounded-xl bg-amber-950/20 border border-amber-900/30 text-center">
+          <p id="cardIchingWisdom" class="text-xs text-amber-200/95 font-medium leading-relaxed"></p>
+        </div>
+
+        <!-- 塔羅牌陣總結分析 -->
+        <div class="mb-2.5">
+          <div class="text-[11px] text-neutral-400 mb-0.5 font-medium">【 牌陣脈絡診斷 】</div>
+          <p id="cardTarotSummary" class="text-xs text-neutral-300 font-light leading-relaxed"></p>
+        </div>
+
+        <!-- 緊扣心事的易經宜忌 -->
+        <div class="space-y-1.5 text-xs pt-2 border-t border-neutral-800/70">
+          <div class="p-2 rounded-lg bg-emerald-950/20 border border-emerald-900/30">
+            <span class="text-emerald-400 font-semibold block mb-0.5">🌿 卦象宜做（針對當前情境）：</span>
+            <span id="luckyAction" class="text-neutral-300 font-light leading-snug block"></span>
           </div>
-          <div class="flex items-start gap-2">
-            <span class="text-indigo-300 font-medium whitespace-nowrap">🎨 幸運色與開運：</span>
-            <span id="luckyOutfit" class="text-neutral-300 font-light"></span>
+          <div class="p-2 rounded-lg bg-rose-950/20 border border-rose-900/30">
+            <span class="text-rose-400 font-semibold block mb-0.5">⚠️ 卦象忌做（情緒踩雷警示）：</span>
+            <span id="avoidAction" class="text-neutral-300 font-light leading-snug block"></span>
+          </div>
+          <div class="flex items-start gap-1.5 pt-1 px-1">
+            <span class="text-indigo-300 font-medium whitespace-nowrap text-[11px]">🎨 開運氣場與穿搭：</span>
+            <span id="luckyVibe" class="text-neutral-300 font-light text-[11px]"></span>
           </div>
         </div>
 
-        <div class="flex gap-2 mt-4 pt-3 border-t border-neutral-800/60">
-          <button onclick="shredAndFinish()" class="flex-1 py-2.5 bg-neutral-800/90 hover:bg-neutral-700 active:scale-95 text-xs text-neutral-300 font-medium rounded-xl transition flex items-center justify-center gap-1">
-            <span>把破事徹底粉碎</span><span>⚡</span>
+        <!-- 操作按鈕 -->
+        <div class="flex gap-2 mt-3 pt-2 border-t border-neutral-800/60">
+          <button onclick="shredAndFinish()" class="flex-1 py-2.5 bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-xs text-neutral-200 font-medium rounded-xl transition flex items-center justify-center gap-1">
+            <span>把心事與怨念粉碎</span><span>⚡</span>
           </button>
           <button onclick="resetView()" class="px-4 py-2.5 border border-neutral-800 hover:border-neutral-700 text-xs text-neutral-400 rounded-xl transition">
             重抽一次
@@ -138,56 +152,58 @@
 
     <!-- 步驟 4：粉碎完成畫面 -->
     <div id="peaceCard" class="opacity-0 pointer-events-none absolute transition-opacity duration-1000 text-center z-10">
-      <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 text-lg">✓</div>
-      <h2 class="text-base font-normal text-neutral-200">心事與壞運已粉碎</h2>
-      <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">氣也出夠了，塔羅指引也拿到了。<br>今天就到這裡，好好善待自己！</p>
+      <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 text-lg">✓</div>
+      <h2 class="text-base font-normal text-neutral-200">心事已隨風化盡</h2>
+      <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">氣已出，卦已解，指引已明。<br>今天到此為止，安心鑽進被窩休息吧。</p>
       <button onclick="resetView()" class="mt-6 px-5 py-2 border border-neutral-800 rounded-full text-xs text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 transition">還有煩惱想倒掉</button>
     </div>
   </main>
 
-  <footer class="w-full max-w-md pb-4 text-center z-10">
-    <p class="text-[11px] text-neutral-500 tracking-wider">深呼吸 · 順應指引 · 睡個好覺</p>
+  <footer class="w-full max-w-md pb-3 text-center z-10">
+    <p class="text-[11px] text-neutral-500 tracking-wider">深呼吸 · 順應卦象 · 今晚好眠</p>
   </footer>
 
   <script>
-    // 22 張經典大阿爾克那塔羅牌
     const tarotDeck = [
-      { name: "愚者 (The Fool)", icon: "🎒", keyword: "重新歸零 · 信任直覺" },
-      { name: "魔術師 (The Magician)", icon: "🪄", keyword: "主動創造 · 掌控局面" },
-      { name: "女祭司 (The High Priestess)", icon: "📜", keyword: "向內沉潛 · 直覺敏銳" },
-      { name: "皇后 (The Empress)", icon: "👑", keyword: "滋養自我 · 享受豐盛" },
-      { name: "皇帝 (The Emperor)", icon: "🏛️", keyword: "重整秩序 · 確立邊界" },
-      { name: "教皇 (The Hierophant)", icon: "🕊️", keyword: "心靈智慧 · 尋求共鳴" },
-      { name: "戀人 (The Lovers)", icon: "💞", keyword: "忠於本心 · 和諧抉擇" },
-      { name: "戰車 (The Chariot)", icon: "⚔️", keyword: "意志堅定 · 衝破迷霧" },
-      { name: "力量 (Strength)", icon: "🦁", keyword: "溫柔堅定 · 以柔克剛" },
-      { name: "隱士 (The Hermit)", icon: "🏮", keyword: "安靜留白 · 獨立思考" },
-      { name: "命運之輪 (Wheel of Fortune)", icon: "☸️", keyword: "轉機來臨 · 順應循環" },
-      { name: "正義 (Justice)", icon: "⚖️", keyword: "理智客觀 · 心中坦然" },
-      { name: "倒吊人 (The Hanged Man)", icon: "🌱", keyword: "換個視角 · 換位沈澱" },
-      { name: "死神 (Death)", icon: "🥀", keyword: "果斷告別 · 迎接新生" },
-      { name: "節制 (Temperance)", icon: "🏺", keyword: "平衡情緒 · 慢調生活" },
-      { name: "惡魔 (The Devil)", icon: "⛓️", keyword: "斬斷內耗 · 奪回自主" },
-      { name: "高塔 (The Tower)", icon: "⚡", keyword: "打破枷鎖 · 釋放包袱" },
-      { name: "星星 (The Star)", icon: "⭐", keyword: "希望重燃 · 深層治癒" },
-      { name: "月亮 (The Moon)", icon: "🌙", keyword: "看破虛妄 · 接納不安" },
-      { name: "太陽 (The Sun)", icon: "☀️", keyword: "萬物晴朗 · 充滿朝氣" },
-      { name: "審判 (Judgement)", icon: "🎺", keyword: "自我和解 · 重新復甦" },
-      { name: "世界 (The World)", icon: "🌍", keyword: "圓滿休止 · 怡然自得" }
+      { name: "愚者", icon: "🎒", keyword: "重新歸零 · 信任直覺" },
+      { name: "魔術師", icon: "🪄", keyword: "主動創造 · 掌控局面" },
+      { name: "女祭司", icon: "📜", keyword: "向內沉潛 · 直覺敏銳" },
+      { name: "皇后", icon: "👑", keyword: "滋養自我 · 享受豐盛" },
+      { name: "皇帝", icon: "🏛️", keyword: "重整秩序 · 確立邊界" },
+      { name: "教皇", icon: "🕊️", keyword: "心靈智慧 · 尋求共鳴" },
+      { name: "戀人", icon: "💞", keyword: "忠於本心 · 和諧抉擇" },
+      { name: "戰車", icon: "⚔️", keyword: "意志堅定 · 衝破迷霧" },
+      { name: "力量", icon: "🦁", keyword: "溫柔堅定 · 以柔克剛" },
+      { name: "隱士", icon: "🏮", keyword: "安靜留白 · 獨立思考" },
+      { name: "命運之輪", icon: "☸️", keyword: "轉機來臨 · 順應循環" },
+      { name: "正義", icon: "⚖️", keyword: "理智客觀 · 心中坦然" },
+      { name: "倒吊人", icon: "🌱", keyword: "換個視角 · 沉潛修整" },
+      { name: "死神", icon: "🥀", keyword: "果斷告別 · 迎接新生" },
+      { name: "節制", icon: "🏺", keyword: "平衡情緒 · 調和步調" },
+      { name: "惡魔", icon: "⛓️", keyword: "斬斷內耗 · 奪回自主" },
+      { name: "高塔", icon: "⚡", keyword: "打破枷鎖 · 釋放包袱" },
+      { name: "星星", icon: "⭐", keyword: "希望重燃 · 深層治癒" },
+      { name: "月亮", icon: "🌙", keyword: "看破虛妄 · 接納不安" },
+      { name: "太陽", icon: "☀️", keyword: "萬物晴朗 · 充滿朝氣" },
+      { name: "審判", icon: "🎺", keyword: "自我和解 · 重新復甦" },
+      { name: "世界", icon: "🌍", keyword: "圓滿休止 · 怡然自得" }
     ];
 
-    // 背面可愛發洩咒語池
-    const ventOptions = [
-      { text: "茶杯放毒", icon: "🍵💀", sub: "偷偷加一滴" },
-      { text: "飛踢後腦", icon: "🦵💥", sub: "直接踹飛" },
-      { text: "狠狠揍他", icon: "🥊🔥", sub: "賞兩拳消氣" },
-      { text: "鍵盤拔光", icon: "⌨️😈", sub: "拔掉他空白鍵" },
-      { text: "畫符咒他", icon: "📜👻", sub: "讓他踩到樂高" },
-      { text: "輪胎洩氣", icon: "🛞🪡", sub: "讓他慢慢推車" },
-      { text: "咖啡倒翻", icon: "☕🫠", sub: "弄髒他新衣服" }
+    const ventDeck = [
+      { text: "茶杯放毒", icon: "🍵💀", sub: "加兩滴洗潔精" },
+      { text: "飛踢後腦", icon: "🦵💥", sub: "直接踹進水溝" },
+      { text: "狠狠揍他", icon: "🥊🔥", sub: "賞兩記左勾拳" },
+      { text: "鍵盤拔光", icon: "⌨️😈", sub: "摳掉所有空白鍵" },
+      { text: "畫符咒他", icon: "📜👻", sub: "出門天天踩樂高" },
+      { text: "輪胎洩氣", icon: "🛞🪡", sub: "騎車慢慢牽回家" },
+      { text: "咖啡倒翻", icon: "☕🫠", sub: "精準潑在白襯衫" },
+      { text: "網路拔線", icon: "🔌✂️", sub: "報告打完直接斷" },
+      { text: "大聲咆哮", icon: "🗣️⚡", sub: "耳膜震裂大清醒" }
     ];
 
-    let currentCandidateCards = [];
+    const stepPositions = ["過去根源", "現狀盲點", "未來轉機"];
+    let poolCards = [];
+    let pickedCards = [];
 
     const quotes = [
       "「 上班只是演一齣領薪水的戲，今天不要拿別人的情緒來懲罰自己。」",
@@ -226,23 +242,19 @@
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
-
-    function resizeCanvas() {
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
-    }
+    function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
     function createParticles(x, y) {
-      for (let i = 0; i < 140; i++) {
+      for (let i = 0; i < 150; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 6 + 2;
         particles.push({
           x: x, y: y,
           vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
           size: Math.random() * 2.5 + 1, alpha: 1, decay: Math.random() * 0.02 + 0.015,
-          color: Math.random() > 0.4 ? '#f59e0b' : '#e2e8f0'
+          color: Math.random() > 0.4 ? '#f59e0b' : '#fb7185'
         });
       }
     }
@@ -259,6 +271,7 @@
       if (particles.length > 0) requestAnimationFrame(animateParticles);
     }
 
+    // 步驟 1 -> 2：產生隨機發洩背面牌池（6 張供任選 3 張）
     function goToPickStep() {
       const thoughtInput = document.getElementById('thoughtInput');
       if (!thoughtInput.value.trim()) {
@@ -266,50 +279,58 @@
         return;
       }
 
-      const shuffledCards = [...tarotDeck].sort(() => 0.5 - Math.random());
-      currentCandidateCards = shuffledCards.slice(0, 3);
-      const shuffledVents = [...ventOptions].sort(() => 0.5 - Math.random());
+      pickedCards = [];
+      const shuffledTarots = [...tarotDeck].sort(() => 0.5 - Math.random());
+      const shuffledVents = [...ventDeck].sort(() => 0.5 - Math.random());
+
+      // 產生 6 張混搭卡片牌池
+      poolCards = [];
+      for (let i = 0; i < 6; i++) {
+        poolCards.push({
+          tarot: shuffledTarots[i],
+          vent: shuffledVents[i % shuffledVents.length]
+        });
+      }
 
       const cardsGrid = document.getElementById('cardsGrid');
       cardsGrid.innerHTML = '';
 
-      for (let i = 0; i < 3; i++) {
-        const vent = shuffledVents[i];
-        const card = currentCandidateCards[i];
-
+      for (let i = 0; i < 6; i++) {
+        const item = poolCards[i];
         const cardContainer = document.createElement('div');
-        cardContainer.className = "card-container h-52 cursor-pointer";
+        cardContainer.className = "card-container h-44 cursor-pointer";
         cardContainer.id = `card-box-${i}`;
-        cardContainer.onclick = () => selectCard(i);
+        cardContainer.onclick = () => onCardClicked(i);
 
         cardContainer.innerHTML = `
-          <div class="card-inner shadow-xl" id="card-inner-${i}">
-            <!-- 卡片背面：可愛發洩符咒 -->
-            <div class="card-front bg-gradient-to-b from-[#25151b] to-[#141217] border border-rose-500/50 p-2.5 flex flex-col items-center justify-center">
-              <span class="text-3xl mb-1 filter drop-shadow">${vent.icon}</span>
-              <span class="text-xs text-rose-300 font-bold tracking-wider mb-1">${vent.text}</span>
-              <span class="text-[9px] text-neutral-400 font-light bg-black/50 px-2 py-0.5 rounded-full border border-neutral-800">${vent.sub}</span>
-              <div class="mt-3 text-[10px] text-rose-400/90 font-medium animate-pulse">點擊翻牌 ⚡</div>
+          <div class="card-inner shadow-lg" id="card-inner-${i}">
+            <!-- 隨機發洩背面 -->
+            <div class="card-front bg-gradient-to-b from-[#241318] to-[#120f14] border border-rose-500/40 p-2 flex flex-col items-center justify-center">
+              <span class="text-2xl mb-1 filter drop-shadow">${item.vent.icon}</span>
+              <span class="text-[11px] text-rose-300 font-bold tracking-wider mb-0.5">${item.vent.text}</span>
+              <span class="text-[8px] text-neutral-400 bg-black/50 px-1.5 py-0.5 rounded border border-neutral-800">${item.vent.sub}</span>
+              <div class="mt-2 text-[9px] text-amber-400/80 font-medium">翻開 ⚡</div>
             </div>
 
-            <!-- 卡片正面：塔羅牌真實卡面 -->
-            <div class="card-back bg-gradient-to-b from-[#242116] to-[#14130e] border-2 border-amber-400/70 p-2.5 flex flex-col items-center justify-between shadow-[0_0_15px_rgba(245,158,11,0.25)]">
-              <span class="text-[10px] text-amber-400/80 tracking-widest uppercase">TAROT</span>
+            <!-- 塔羅正面 -->
+            <div class="card-back bg-gradient-to-b from-[#211d13] to-[#11100b] border-2 border-amber-400/70 p-2 flex flex-col items-center justify-between shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+              <span class="text-[9px] text-amber-400 tracking-widest uppercase font-semibold" id="card-step-badge-${i}"></span>
               <div class="my-auto text-center">
-                <div class="text-3xl mb-1">${card.icon}</div>
-                <div class="text-xs text-amber-200 font-semibold">${card.name}</div>
-                <div class="text-[9px] text-amber-400/70 mt-1">${card.keyword}</div>
+                <div class="text-2xl mb-0.5">${item.tarot.icon}</div>
+                <div class="text-[11px] text-amber-200 font-semibold">${item.tarot.name}</div>
+                <div class="text-[8px] text-amber-400/70 mt-0.5">${item.tarot.keyword}</div>
               </div>
-              <span class="text-[9px] text-amber-500/80">✦ 命運已揭曉 ✦</span>
+              <span class="text-[8px] text-amber-500/80">✦ 命運之牌 ✦</span>
             </div>
           </div>
         `;
         cardsGrid.appendChild(cardContainer);
       }
 
+      updatePickStatus();
+
       const stepInput = document.getElementById('stepInput');
       const stepPick = document.getElementById('stepPick');
-
       stepInput.style.transform = 'scale(0.95)';
       stepInput.style.opacity = '0';
       
@@ -323,49 +344,74 @@
       }, 300);
     }
 
-    async function selectCard(index) {
-      if (navigator.vibrate) navigator.vibrate([40, 60]);
-
-      const selectedCard = currentCandidateCards[index];
-      const thought = document.getElementById('thoughtInput').value.trim();
-      const loadingText = document.getElementById('loadingText');
-      const cardsGrid = document.getElementById('cardsGrid');
-
-      // 鎖定點擊並觸發選中卡片的 3D 翻轉
-      cardsGrid.style.pointerEvents = 'none';
-      const innerCard = document.getElementById(`card-inner-${index}`);
-      innerCard.classList.add('flipped');
-
-      // 將其他未選中的卡片淡化
-      for (let i = 0; i < 3; i++) {
-        if (i !== index) {
-          const otherCard = document.getElementById(`card-box-${i}`);
-          otherCard.style.transition = 'opacity 0.5s ease';
-          otherCard.style.opacity = '0.2';
-        }
+    function updatePickStatus() {
+      const counter = pickedCards.length;
+      document.getElementById('pickCounter').innerText = `${counter} / 3`;
+      if (counter < 3) {
+        document.getElementById('pickStatus').innerText = `請選第 ${counter + 1} 張牌：代表「${stepPositions[counter]}」`;
       }
+    }
 
+    // 點擊翻牌邏輯
+    function onCardClicked(index) {
+      if (pickedCards.some(p => p.index === index)) return;
+      if (navigator.vibrate) navigator.vibrate([30, 40]);
+
+      const currentStep = pickedCards.length;
+      const selectedCard = poolCards[index].tarot;
+      pickedCards.push({ index, tarot: selectedCard, role: stepPositions[currentStep] });
+
+      // 標註順位徽章並 3D 翻轉
+      document.getElementById(`card-step-badge-${index}`).innerText = stepPositions[currentStep];
+      document.getElementById(`card-inner-${index}`).classList.add('flipped');
+
+      updatePickStatus();
+
+      // 抽滿 3 張，開始呼叫 AI 東西會診
+      if (pickedCards.length === 3) {
+        finishPickingAndAnalyze();
+      }
+    }
+
+    async function finishPickingAndAnalyze() {
+      const cardsGrid = document.getElementById('cardsGrid');
+      const loadingText = document.getElementById('loadingText');
+      cardsGrid.style.pointerEvents = 'none';
       loadingText.classList.remove('hidden');
 
+      const thought = document.getElementById('thoughtInput').value.trim();
+      const sendCards = pickedCards.map(p => p.tarot);
+
       try {
-        // 將使用者輸入的心事與選中的牌一起送到後端讓 Gemini 解析
         const response = await fetch('/api/reply', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ thought, card: selectedCard })
+          body: JSON.stringify({ thought, cards: sendCards })
         });
 
         const data = await response.json();
 
-        // 填入處方箋
-        document.getElementById('cardName').innerText = data.cardName || selectedCard.name;
-        document.getElementById('cardEncouragement').innerText = `「 ${data.encouragement || "隨遇而安，順應自然。"} 」`;
-        document.getElementById('cardInsight').innerText = data.insight || "放下多餘的擔憂。";
-        document.getElementById('luckyAction').innerText = data.luckyAction || "喝一杯熱茶散步放空。";
-        document.getElementById('avoidAction').innerText = data.avoidAction || "在深夜裡苛責自己。";
-        document.getElementById('luckyOutfit').innerText = data.luckyOutfit || "米白色或溫暖色調。";
+        // 填入東西會診處方箋
+        document.getElementById('cardIching').innerText = data.ichingName || "地火明夷卦 ䷣";
+        document.getElementById('cardIchingWisdom').innerText = `「 ${data.ichingWisdom || "韜光養晦，不拿別人的混亂懲罰自己。"} 」`;
+        document.getElementById('cardTarotSummary').innerText = data.tarotSummary || "三張牌展現了這段心事的起承轉合。";
+        document.getElementById('luckyAction').innerText = data.luckyAction || "把今天的工作進度條儲存好，準時離開辦公室。";
+        document.getElementById('avoidAction').innerText = data.avoidAction || "在深夜裡苛責自己哪裡沒做好。";
+        document.getElementById('luckyVibe').innerText = data.luckyVibe || "溫柔淺色系衣著，搭配純銀小飾品。";
 
-        // 讓使用者看清正面翻開的塔羅牌 1.6 秒，再滑順切換至處方箋卡片
+        // 渲染選中的三張牌
+        const row = document.getElementById('pickedCardsRow');
+        row.innerHTML = '';
+        pickedCards.forEach(p => {
+          row.innerHTML += `
+            <div class="flex-1">
+              <span class="text-[9px] text-neutral-400 block">${p.role}</span>
+              <span class="text-xs text-amber-300 font-semibold">${p.tarot.icon} ${p.tarot.name}</span>
+            </div>
+          `;
+        });
+
+        // 停留 1.5 秒讓使用者看完整個牌陣，切換到處方箋
         setTimeout(() => {
           const stepPick = document.getElementById('stepPick');
           const prescriptionCard = document.getElementById('prescriptionCard');
@@ -381,10 +427,10 @@
             prescriptionCard.classList.remove('opacity-0', 'pointer-events-none');
             prescriptionCard.classList.add('opacity-100', 'pointer-events-auto', 'fade-in');
           }, 400);
-        }, 1600);
+        }, 1500);
 
       } catch (e) {
-        console.error("解盤出錯:", e);
+        console.error("會診失敗:", e);
         loadingText.classList.add('hidden');
         cardsGrid.style.pointerEvents = 'auto';
       }
@@ -413,6 +459,7 @@
 
     function resetView() {
       document.getElementById('thoughtInput').value = '';
+      pickedCards = [];
       
       const peaceCard = document.getElementById('peaceCard');
       const prescriptionCard = document.getElementById('prescriptionCard');
