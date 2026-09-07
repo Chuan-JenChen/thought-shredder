@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>思維粉碎機 | 深夜避難所</title>
+  <title>深夜避難所 | 塔羅心靈處方箋</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -12,69 +12,126 @@
       touch-action: manipulation;
     }
     textarea:focus { outline: none; }
-    .fade-in { animation: fadeIn 1.5s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.8s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="h-screen w-screen flex flex-col items-center justify-between p-6 select-none overflow-hidden">
+<body class="h-screen w-screen flex flex-col items-center justify-between p-5 select-none overflow-hidden font-sans">
 
-  <!-- 每日卸甲金句區塊 -->
-  <header class="w-full max-w-md pt-8 text-center fade-in z-10">
-    <h1 class="text-xs font-medium tracking-widest text-neutral-500 mb-4">TODAY'S SHIELD</h1>
-    <div class="bg-neutral-900/50 border border-neutral-800/60 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
-      <p id="dailyQuoteText" class="text-sm text-neutral-300 leading-relaxed font-light"></p>
+  <!-- 頂部標題與金句 -->
+  <header class="w-full max-w-md pt-4 text-center z-10">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-[11px] text-amber-400/80 mb-2">
+      <span>✦</span><span>心靈避難所 · 今日塔羅指引</span><span>✦</span>
+    </div>
+    <div class="bg-neutral-900/40 border border-neutral-800/60 rounded-xl p-3 backdrop-blur-sm">
+      <p id="dailyQuoteText" class="text-xs text-neutral-400 font-light leading-relaxed"></p>
     </div>
   </header>
 
-  <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center relative">
-    <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-20"></canvas>
-    
+  <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center relative my-2">
+    <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-30"></canvas>
+
     <!-- 輸入區塊 -->
-    <div id="inputCard" class="w-full bg-[#161822] border border-neutral-800/80 rounded-2xl p-5 shadow-2xl transition-all duration-700 z-10 mt-6">
-      <textarea id="thoughtInput" rows="4" placeholder="今天有什麼煩心事？主管的臉色、莫名的委屈...丟進來粉碎吧。" class="w-full bg-transparent text-sm text-neutral-200 placeholder-neutral-500 resize-none font-light leading-relaxed"></textarea>
-      <div class="flex justify-between items-center mt-3 pt-3 border-t border-neutral-800/40">
-        <span class="text-[11px] text-neutral-500">寫完即焚 · 不留紀錄</span>
-        <button id="shredBtn" onclick="handleShred()" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-xs text-neutral-300 font-medium rounded-xl transition-all flex items-center gap-1.5">
-          <span>粉碎丟棄</span><span class="text-xs">⚡</span>
+    <div id="inputCard" class="w-full bg-[#161822] border border-neutral-800/90 rounded-2xl p-5 shadow-2xl transition-all duration-700 z-10">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs text-neutral-400 font-medium">傾訴心事</span>
+        <span class="text-[11px] text-neutral-500">宇宙抽牌 · 量身處方</span>
+      </div>
+      <textarea id="thoughtInput" rows="4" placeholder="今天發生了什麼事？主管的臉色、被誤解的委屈、莫名的焦慮...寫下來，讓塔羅與 AI 為妳解開。" class="w-full bg-transparent text-sm text-neutral-200 placeholder-neutral-600 resize-none font-light leading-relaxed"></textarea>
+      
+      <div class="flex justify-between items-center mt-3 pt-3 border-t border-neutral-800/50">
+        <span class="text-[11px] text-neutral-500">寫完即焚 · 不留痕跡</span>
+        <button id="actionBtn" onclick="handleConsult()" class="px-5 py-2.5 bg-gradient-to-r from-amber-500/80 to-amber-600/80 hover:from-amber-500 hover:to-amber-600 active:scale-95 text-xs text-neutral-950 font-semibold rounded-xl transition-all shadow-lg flex items-center gap-1.5">
+          <span>抽牌領取處方</span><span>✨</span>
         </button>
       </div>
     </div>
 
-    <!-- 完成畫面卡片 -->
+    <!-- 處方箋拍立得卡片 (預設隱藏) -->
+    <div id="prescriptionCard" class="opacity-0 pointer-events-none absolute w-full transition-all duration-700 z-20">
+      <div class="w-full bg-gradient-to-b from-[#1c1e2b] to-[#12131c] border border-neutral-700/60 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+        
+        <div class="flex justify-between items-center border-b border-neutral-800/70 pb-2 mb-3">
+          <span class="text-[11px] tracking-wider text-amber-400 font-medium">✦ 今日星辰指引</span>
+          <span id="cardName" class="text-xs font-semibold text-neutral-200 bg-neutral-800/80 px-2.5 py-0.5 rounded-full border border-neutral-700"></span>
+        </div>
+
+        <!-- 勸勉金句 -->
+        <div class="my-3 p-3 rounded-xl bg-amber-950/20 border border-amber-900/30 text-center">
+          <p id="cardEncouragement" class="text-xs text-amber-200/90 font-normal leading-relaxed"></p>
+        </div>
+
+        <!-- 心靈洞察 -->
+        <div class="mb-3">
+          <div class="text-[11px] text-neutral-400 mb-1 font-medium">【 心靈盲點解析 】</div>
+          <p id="cardInsight" class="text-xs text-neutral-300 font-light leading-relaxed"></p>
+        </div>
+
+        <!-- 宜 / 忌 / 穿搭 -->
+        <div class="grid grid-cols-1 gap-2 text-xs pt-2 border-t border-neutral-800/60">
+          <div class="flex items-start gap-2">
+            <span class="text-emerald-400 font-medium whitespace-nowrap">🌿 今日宜：</span>
+            <span id="luckyAction" class="text-neutral-300 font-light"></span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-rose-400 font-medium whitespace-nowrap">⚠️ 今日忌：</span>
+            <span id="avoidAction" class="text-neutral-300 font-light"></span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-indigo-300 font-medium whitespace-nowrap">🎨 幸運色與開運：</span>
+            <span id="luckyOutfit" class="text-neutral-300 font-light"></span>
+          </div>
+        </div>
+
+        <!-- 下方操作按鈕 -->
+        <div class="flex gap-2 mt-4 pt-3 border-t border-neutral-800/60">
+          <button onclick="shredAndFinish()" class="flex-1 py-2.5 bg-neutral-800/90 hover:bg-neutral-700 active:scale-95 text-xs text-neutral-300 font-medium rounded-xl transition flex items-center justify-center gap-1">
+            <span>碎掉煩惱</span><span>⚡</span>
+          </button>
+          <button onclick="resetView()" class="px-4 py-2.5 border border-neutral-800 hover:border-neutral-700 text-xs text-neutral-400 rounded-xl transition">
+            再抽一次
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 粉碎完成沉浸畫面 -->
     <div id="peaceCard" class="opacity-0 pointer-events-none absolute transition-opacity duration-1000 text-center z-10">
       <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 text-lg">✓</div>
-      <h2 class="text-base font-normal text-neutral-200">今天到此為止</h2>
-      <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">妳已經撐過今天了。<br>這些破事不值得佔用妳寶貴的睡眠。</p>
-      <button onclick="resetView()" class="mt-8 px-5 py-2 border border-neutral-800 rounded-full text-xs text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 transition">還有煩惱想碎掉</button>
+      <h2 class="text-base font-normal text-neutral-200">心事已徹底粉碎</h2>
+      <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">帶著指引的力量，今天到此為止。<br>鑽進被窩，今晚安心睡個好覺。</p>
+      <button onclick="resetView()" class="mt-6 px-5 py-2 border border-neutral-800 rounded-full text-xs text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 transition">還有心事想傾訴</button>
     </div>
   </main>
 
-  <footer class="w-full max-w-md pb-6 text-center z-10">
-    <p class="text-[11px] text-neutral-500 tracking-wider">深呼吸 · 鑽進被窩 · 安心睡覺</p>
+  <footer class="w-full max-w-md pb-4 text-center z-10">
+    <p class="text-[11px] text-neutral-500 tracking-wider">深呼吸 · 順應指引 · 睡個好覺</p>
   </footer>
 
   <script>
-    // 每日金句系統
+    // 每日金句
     const quotes = [
-      "上班只是演一齣領薪水的戲，演得剛剛好及格就行。今天不要拿別人的情緒來懲罰自己。",
-      "今天看什麼都不順眼是正常的。這不是妳脾氣差，只是身體累了。今天不用反省自己，想吃甜的就去買。",
-      "今天做不完的事，代表今天根本不該做完。妳已經撐了一整天，被窩現在完全屬於妳。",
-      "不用對每個人的期待負責，妳的首要任務是討好妳自己。",
-      "剛剛那個尷尬的瞬間，其實除了妳之外，沒有人會記得。放過自己吧，明天又是新的一天。"
+      "「 上班只是演一齣領薪水的戲，今天不要拿別人的情緒來懲罰自己。」",
+      "「 今天做不完的事，代表今天根本不該做完。妳已經撐了一整天，被窩現在完全屬於妳。」",
+      "「 不用對每個人的期待負責，妳的首要任務是先照顧好自己。」",
+      "「 剛剛那個尷尬或委屈的瞬間，其實除了妳之外沒人會一直記得。放過自己吧。」",
+      "「 宇宙把妳放在這個位置，不是要妳事事完美，而是要妳學會心疼自己。」"
     ];
 
     function loadDailyQuote() {
       const today = new Date();
       const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-      const quoteIndex = dayOfYear % quotes.length;
-      document.getElementById('dailyQuoteText').innerText = `「 ${quotes[quoteIndex]} 」`;
+      document.getElementById('dailyQuoteText').innerText = quotes[dayOfYear % quotes.length];
     }
     loadDailyQuote();
 
-    // 聲音系統 (432Hz 頌缽)
+    // 432Hz 頌缽音效
     let audioCtx = null;
     function playSingingBowl() {
       try {
@@ -91,26 +148,30 @@
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 3.5);
-      } catch (e) { console.log("Audio skipped"); }
+      } catch (e) { }
     }
 
-    // 粒子粉碎系統
+    // 粒子粉碎動畫
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
     let particles = [];
-    function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
     function createParticles(x, y) {
-      for (let i = 0; i < 120; i++) {
+      for (let i = 0; i < 140; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 6 + 2;
         particles.push({
           x: x, y: y,
           vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
           size: Math.random() * 2.5 + 1, alpha: 1, decay: Math.random() * 0.02 + 0.015,
-          color: Math.random() > 0.4 ? '#a3a3a3' : '#e2e8f0'
+          color: Math.random() > 0.4 ? '#f59e0b' : '#e2e8f0'
         });
       }
     }
@@ -127,15 +188,14 @@
       if (particles.length > 0) requestAnimationFrame(animateParticles);
     }
 
-    // 串接 AI 與粉碎流程控制
-    async function handleShred() {
-      const input = document.getElementById('thoughtInput');
-      const shredBtn = document.getElementById('shredBtn');
-      const thought = input.value.trim();
-      if (!thought) return;
+    // 核心流程：抽牌諮商
+    async function handleConsult() {
+      const thoughtInput = document.getElementById('thoughtInput');
+      const actionBtn = document.getElementById('actionBtn');
+      const thought = thoughtInput.value.trim();
 
-      shredBtn.innerHTML = '<span class="animate-pulse">讀取中...</span>';
-      shredBtn.disabled = true;
+      actionBtn.innerHTML = '<span class="animate-pulse">宇宙抽牌解讀中...</span>';
+      actionBtn.disabled = true;
 
       try {
         const response = await fetch('/api/reply', {
@@ -143,58 +203,78 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ thought })
         });
+
         const data = await response.json();
 
-        // 替換成 AI 回覆文字並改變顏色
-        input.value = `AI 閨蜜：\n「 ${data.reply.trim()} 」`;
-        input.style.color = '#10b981'; 
-        
-        // 給予 3.5 秒的閱讀時間再粉碎
+        // 填入卡片內容
+        document.getElementById('cardName').innerText = data.cardName || "命運之牌";
+        document.getElementById('cardEncouragement').innerText = `「 ${data.encouragement || "隨遇而安，順應自然。"} 」`;
+        document.getElementById('cardInsight').innerText = data.insight || "放下多餘的擔憂。";
+        document.getElementById('luckyAction').innerText = data.luckyAction || "喝一杯熱茶散步放空。";
+        document.getElementById('avoidAction').innerText = data.avoidAction || "在深夜裡苛責自己。";
+        document.getElementById('luckyOutfit').innerText = data.luckyOutfit || "米白色或溫暖色調。";
+
+        // 切換到處方卡片
+        const inputCard = document.getElementById('inputCard');
+        const prescriptionCard = document.getElementById('prescriptionCard');
+
+        inputCard.style.transform = 'scale(0.95)';
+        inputCard.style.opacity = '0';
+        inputCard.style.pointerEvents = 'none';
+
         setTimeout(() => {
-          executeShreddingAnimation(input, shredBtn);
-        }, 3500);
+          prescriptionCard.classList.remove('opacity-0', 'pointer-events-none');
+          prescriptionCard.classList.add('opacity-100', 'pointer-events-auto', 'fade-in');
+          actionBtn.innerHTML = '<span>抽牌領取處方</span><span>✨</span>';
+          actionBtn.disabled = false;
+        }, 300);
 
       } catch (e) {
-        executeShreddingAnimation(input, shredBtn);
+        console.error(e);
+        actionBtn.innerHTML = '<span>抽牌領取處方</span><span>✨</span>';
+        actionBtn.disabled = false;
       }
     }
 
-    // 執行粉碎動畫與震動
-    function executeShreddingAnimation(input, shredBtn) {
-      if (navigator.vibrate) navigator.vibrate([40, 60, 100]);
+    // 粉碎卡片並結束
+    function shredAndFinish() {
+      if (navigator.vibrate) navigator.vibrate([50, 70, 120]);
       playSingingBowl();
-      
-      const rect = input.getBoundingClientRect();
+
+      const prescriptionCard = document.getElementById('prescriptionCard');
+      const rect = prescriptionCard.getBoundingClientRect();
       const parentRect = canvas.getBoundingClientRect();
       createParticles(rect.left - parentRect.left + rect.width / 2, rect.top - parentRect.top + rect.height / 2);
       animateParticles();
-      
-      const inputCard = document.getElementById('inputCard');
-      inputCard.style.transform = 'scale(0.8) translateY(-20px)';
-      inputCard.style.opacity = '0';
-      inputCard.style.pointerEvents = 'none';
-      
+
+      prescriptionCard.style.transform = 'scale(0.8) translateY(-20px)';
+      prescriptionCard.style.opacity = '0';
+      prescriptionCard.style.pointerEvents = 'none';
+
       setTimeout(() => {
         const peaceCard = document.getElementById('peaceCard');
         peaceCard.classList.remove('opacity-0', 'pointer-events-none');
-        peaceCard.classList.add('opacity-100');
-        
-        // 復原初始狀態
-        shredBtn.innerHTML = '<span>粉碎丟棄</span><span class="text-xs">⚡</span>';
-        shredBtn.disabled = false;
-        input.style.color = ''; 
-      }, 700);
+        peaceCard.classList.add('opacity-100', 'pointer-events-auto');
+      }, 600);
     }
 
-    // 重新開始另一輪
+    // 重設回輸入視窗
     function resetView() {
       document.getElementById('thoughtInput').value = '';
+      
       const peaceCard = document.getElementById('peaceCard');
-      peaceCard.classList.remove('opacity-100');
+      const prescriptionCard = document.getElementById('prescriptionCard');
+      const inputCard = document.getElementById('inputCard');
+
+      peaceCard.classList.remove('opacity-100', 'pointer-events-auto');
       peaceCard.classList.add('opacity-0', 'pointer-events-none');
+
+      prescriptionCard.classList.remove('opacity-100', 'pointer-events-auto');
+      prescriptionCard.classList.add('opacity-0', 'pointer-events-none');
+      prescriptionCard.style.transform = 'scale(1) translateY(0)';
+
       setTimeout(() => {
-        const inputCard = document.getElementById('inputCard');
-        inputCard.style.transform = 'scale(1) translateY(0)';
+        inputCard.style.transform = 'scale(1)';
         inputCard.style.opacity = '1';
         inputCard.style.pointerEvents = 'auto';
       }, 300);
