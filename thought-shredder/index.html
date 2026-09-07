@@ -155,7 +155,7 @@
       <button onclick="resetView()" class="mt-6 px-5 py-2 border border-neutral-800 rounded-full text-xs text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 transition">還有煩惱想倒掉</button>
     </div>
 
-    <!-- 付費彈窗 Modal (Paywall) -->
+    <!-- 付費彈窗 Modal -->
     <div id="paywallModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div class="w-full max-w-sm bg-gradient-to-b from-[#1f212f] to-[#12131b] border border-amber-500/50 rounded-2xl p-6 text-center shadow-2xl relative">
         <button onclick="closePaywall()" class="absolute top-3 right-3 text-neutral-400 hover:text-white text-lg">✕</button>
@@ -350,14 +350,26 @@
 
     // 步驟 1 -> 步驟 2：進入抽牌
     function goToPickStep() {
+      const thoughtInput = document.getElementById('thoughtInput');
+      const val = thoughtInput.value.trim();
+
+      // 開發者密碼指令：直接重置次數
+      if (val === 'jj20061210') {
+        localStorage.removeItem('tarot_date');
+        localStorage.removeItem('tarot_count');
+        updateQuotaUI();
+        thoughtInput.value = '';
+        alert("⚡ [Dev] 額度已重置回 2 次！");
+        return;
+      }
+
       const remaining = getRemainingQuota();
       if (remaining <= 0) {
         showPaywall();
         return;
       }
 
-      const thoughtInput = document.getElementById('thoughtInput');
-      if (!thoughtInput.value.trim()) {
+      if (!val) {
         thoughtInput.focus();
         return;
       }

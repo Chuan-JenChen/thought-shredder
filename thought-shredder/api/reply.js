@@ -8,7 +8,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "GEMINI_API_KEY is missing" });
   }
 
-  // 易經常見 12 核心吉凶轉化卦庫
   const ichingGuaList = [
     { name: "地水師卦", symbol: "䷆", essence: "處變不驚、以退為進、紀律整頓" },
     { name: "水火既濟卦", symbol: "䷾", essence: "事態已定、守成為上、防微杜漸" },
