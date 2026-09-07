@@ -7,8 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
-      background-color: #0c0d12;
-      color: #e2e8f0;
+      background-color: #121014;
+      color: #f3e8ee;
       touch-action: manipulation;
     }
     textarea:focus { outline: none; }
@@ -28,7 +28,7 @@
     .card-front, .card-back {
       position: absolute; width: 100%; height: 100%;
       -webkit-backface-visibility: hidden; backface-visibility: hidden;
-      border-radius: 0.75rem;
+      border-radius: 1rem;
     }
     .card-back { transform: rotateY(180deg); }
   </style>
@@ -38,17 +38,18 @@
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-between p-4 select-none overflow-hidden font-sans">
 
+  <!-- 頂部標題與金句 -->
   <header class="w-full max-w-md pt-3 text-center z-10">
     <div class="flex items-center justify-between px-2 mb-2">
-      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-[11px] text-rose-400 font-medium">
-        <span>⚡</span><span>深夜毒舌閨蜜 · 怨氣退散處</span><span>⚡</span>
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1e1720] border border-pink-900/40 text-[11px] text-pink-300 font-medium shadow-sm">
+        <span>✨</span><span>深夜心事避難所 · 閨蜜專屬頻道</span><span>✨</span>
       </div>
-      <div class="text-[11px] px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-neutral-300">
-        今日發洩：<span id="quotaDisplay" class="text-rose-400 font-bold">2</span> 次
+      <div class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#1a141c] border border-pink-800/30 text-pink-200/90">
+        今日解壓：<span id="quotaDisplay" class="text-pink-300 font-bold">2</span> 次
       </div>
     </div>
-    <div class="bg-neutral-900/40 border border-neutral-800/60 rounded-xl p-2.5 backdrop-blur-sm">
-      <p id="dailyQuoteText" class="text-xs text-neutral-400 font-light leading-relaxed"></p>
+    <div class="bg-[#1c1620]/60 border border-pink-900/30 rounded-2xl p-3 backdrop-blur-md shadow-lg">
+      <p id="dailyQuoteText" class="text-xs text-pink-100/70 font-light leading-relaxed"></p>
     </div>
   </header>
 
@@ -56,17 +57,17 @@
     <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-30"></canvas>
 
     <!-- 步驟 1：倒垃圾心事 -->
-    <div id="stepInput" class="w-full bg-[#161822] border border-neutral-800/90 rounded-2xl p-5 shadow-2xl transition-all duration-300 z-10">
+    <div id="stepInput" class="w-full bg-[#1b151f]/90 border border-pink-800/40 rounded-3xl p-5 shadow-2xl transition-all duration-300 z-10 backdrop-blur-sm">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs text-rose-300 font-semibold">開麥倒垃圾（誰又惹妳了？）</span>
-        <span class="text-[11px] text-neutral-500">吐槽即焚</span>
+        <span class="text-xs text-pink-200 font-semibold tracking-wide">把心事倒進來（誰又讓妳委屈了？）</span>
+        <span class="text-[11px] text-pink-400/60">寫完即碎 🕯️</span>
       </div>
-      <textarea id="thoughtInput" rows="4" placeholder="主管又發癲？爛同事又甩鍋？這堆爛攤子到底乾妳屁事？直接講，姐妹幫妳一起開噴！" class="w-full bg-transparent text-sm text-neutral-200 placeholder-neutral-600 resize-none font-light leading-relaxed"></textarea>
+      <textarea id="thoughtInput" rows="4" placeholder="今天遇到什麼爛人破事？主管碎念、同事推託、還是心裡悶悶的？直接寫下來，準備選符咒狠狠出氣！" class="w-full bg-transparent text-sm text-pink-50 placeholder-pink-300/30 resize-none font-light leading-relaxed"></textarea>
       
-      <div class="flex justify-between items-center mt-3 pt-3 border-t border-neutral-800/50">
-        <span class="text-[11px] text-neutral-500">罵完直接碎掉 · 不留痕跡</span>
-        <button onclick="goToPickStep()" class="px-5 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 active:scale-95 text-xs text-white font-bold rounded-xl transition-all shadow-lg flex items-center gap-1.5">
-          <span>召喚姐妹牌陣</span><span>🧨</span>
+      <div class="flex justify-between items-center mt-3 pt-3 border-t border-pink-900/30">
+        <span class="text-[11px] text-pink-300/40">只屬於妳的深夜樹洞</span>
+        <button onclick="goToPickStep()" class="px-5 py-2.5 bg-gradient-to-r from-pink-500 via-rose-400 to-purple-500 hover:opacity-90 active:scale-95 text-xs text-white font-bold rounded-2xl transition-all shadow-[0_4px_15px_rgba(244,114,182,0.3)] flex items-center gap-1.5">
+          <span>召喚心靈牌卡</span><span>🔮</span>
         </button>
       </div>
     </div>
@@ -74,61 +75,67 @@
     <!-- 步驟 2：抽牌階段 -->
     <div id="stepPick" class="hidden w-full z-10 text-center">
       <div class="flex items-center justify-between px-2 mb-2">
-        <h3 class="text-xs font-bold text-rose-400" id="pickStatus">挑第 1 個出氣符：看妳「之前有多冤」</h3>
-        <span class="text-[10px] bg-neutral-800 text-rose-300 px-2 py-0.5 rounded-full border border-neutral-700" id="pickCounter">0 / 3</span>
+        <h3 class="text-xs font-bold text-pink-300" id="pickStatus">直覺選第 1 張：看「妳之前受了什麼委屈」</h3>
+        <span class="text-[10px] bg-[#221927] text-pink-300 px-2 py-0.5 rounded-full border border-pink-800/40" id="pickCounter">0 / 3</span>
       </div>
-      <p class="text-[11px] text-neutral-500 mb-3">選一張最想送給對方的咒語，翻開看命運真相</p>
+      <p class="text-[11px] text-pink-200/50 mb-3">背面皆為心願發洩符咒，翻開顯露命運真相</p>
       
-      <div class="grid grid-cols-3 gap-2 w-full px-1" id="cardsGrid"></div>
+      <div class="grid grid-cols-3 gap-2.5 w-full px-1" id="cardsGrid"></div>
       
-      <div id="loadingText" class="hidden text-xs text-rose-400 mt-4 animate-pulse">
-        🔥 牌陣已鎖定，毒舌閨蜜正在幫妳整理反擊清單...
+      <div id="loadingText" class="hidden text-xs text-pink-300 mt-4 animate-pulse">
+        ✦ 牌陣已鎖定，毒舌閨蜜正在認真研讀妳的心事...
       </div>
     </div>
 
     <!-- 步驟 3：清醒處方箋 -->
     <div id="prescriptionCard" class="hidden w-full z-20">
-      <div class="w-full bg-gradient-to-b from-[#1c1a24] to-[#121118] border border-rose-500/40 rounded-2xl p-4 shadow-2xl relative overflow-hidden max-h-[82vh] overflow-y-auto">
+      <div class="w-full bg-gradient-to-b from-[#211827] to-[#151119] border border-pink-500/30 rounded-3xl p-5 shadow-2xl relative overflow-hidden max-h-[82vh] overflow-y-auto">
         
-        <div class="flex justify-between items-center border-b border-neutral-800 pb-2 mb-2.5">
+        <!-- 頂部標題列 -->
+        <div class="flex justify-between items-center border-b border-pink-900/40 pb-2.5 mb-3">
           <div class="flex items-center gap-2">
-            <span class="text-rose-400 text-sm font-black tracking-wide" id="vibeTitle"></span>
-            <span class="text-[9px] bg-rose-950 text-rose-300 border border-rose-800/60 px-2 py-0.5 rounded-md font-bold">今日劇本</span>
+            <span class="text-pink-300 text-sm font-bold tracking-wide" id="vibeTitle"></span>
+            <span class="text-[9px] bg-pink-950/80 text-pink-200 border border-pink-800/50 px-2 py-0.5 rounded-full font-medium">今日劇本</span>
           </div>
-          <span class="text-[10px] text-neutral-500">深夜人間清醒指南</span>
+          <span class="text-[10px] text-pink-200/40">深夜人間清醒指南</span>
         </div>
 
-        <div class="flex justify-between gap-1.5 mb-2.5 p-2 bg-neutral-900/80 rounded-xl border border-neutral-800 text-center" id="pickedCardsRow"></div>
+        <!-- 三張牌直覺標籤 -->
+        <div class="flex justify-between gap-1.5 mb-3 p-2 bg-[#17121b]/80 rounded-2xl border border-pink-900/30 text-center" id="pickedCardsRow"></div>
 
-        <div class="mb-2.5 p-3 rounded-xl bg-gradient-to-r from-rose-950/40 to-neutral-900/60 border border-rose-900/40 text-center">
-          <p id="soulSlap" class="text-xs text-rose-200 font-bold leading-relaxed"></p>
+        <!-- 閨蜜金句 -->
+        <div class="mb-3 p-3 rounded-2xl bg-gradient-to-r from-pink-950/40 via-purple-950/30 to-pink-950/40 border border-pink-800/40 text-center shadow-inner">
+          <p id="soulSlap" class="text-xs text-pink-200 font-bold leading-relaxed"></p>
         </div>
 
-        <div class="mb-2.5 px-1">
-          <div class="text-[11px] text-neutral-400 mb-1 font-bold">【 閨蜜講真心話 】</div>
-          <p id="sisterAnalysis" class="text-xs text-neutral-300 font-light leading-relaxed"></p>
+        <!-- 閨蜜真心話 -->
+        <div class="mb-3 px-1">
+          <div class="text-[11px] text-pink-300/70 mb-1 font-semibold">【 閨蜜講真心話 】</div>
+          <p id="sisterAnalysis" class="text-xs text-pink-100/80 font-light leading-relaxed"></p>
         </div>
 
-        <div class="space-y-2 text-xs pt-2 border-t border-neutral-800/80">
-          <div class="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-800/40">
-            <span class="text-emerald-400 font-bold block mb-1">💅 聽姐一句勸（今天這樣反擊）：</span>
-            <span id="doThis" class="text-neutral-300 font-light leading-snug block"></span>
+        <!-- 宜忌區塊 -->
+        <div class="space-y-2 text-xs pt-2.5 border-t border-pink-900/30">
+          <div class="p-3 rounded-2xl bg-emerald-950/20 border border-emerald-800/30">
+            <span class="text-emerald-300 font-bold block mb-1">🌿 聽姐一句勸（今天這樣反擊）：</span>
+            <span id="doThis" class="text-neutral-200 font-light leading-snug block"></span>
           </div>
-          <div class="p-2.5 rounded-xl bg-rose-950/30 border border-rose-800/40">
-            <span class="text-rose-400 font-bold block mb-1">🚫 千萬別犯蠢（當大冤種行為）：</span>
-            <span id="dontDoThis" class="text-neutral-300 font-light leading-snug block"></span>
+          <div class="p-3 rounded-2xl bg-rose-950/20 border border-rose-800/30">
+            <span class="text-rose-300 font-bold block mb-1">🚫 千萬別犯蠢（當大冤種行為）：</span>
+            <span id="dontDoThis" class="text-neutral-200 font-light leading-snug block"></span>
           </div>
           <div class="flex items-start gap-1.5 pt-1 px-1">
-            <span class="text-purple-300 font-semibold whitespace-nowrap text-[11px]">💄 今日氣場戰袍：</span>
+            <span class="text-purple-300 font-medium whitespace-nowrap text-[11px]">💄 今日氣場戰袍：</span>
             <span id="outfitVibe" class="text-neutral-300 font-light text-[11px]"></span>
           </div>
         </div>
 
-        <div class="flex gap-2 mt-4 pt-2 border-t border-neutral-800/60">
-          <button onclick="shredAndFinish()" class="flex-1 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 active:scale-95 text-xs text-white font-bold rounded-xl transition flex items-center justify-center gap-1 shadow-lg">
-            <span>把破事徹底粉碎炸掉</span><span>💥</span>
+        <!-- 操作按鈕 -->
+        <div class="flex gap-2.5 mt-4 pt-2.5 border-t border-pink-900/30">
+          <button onclick="shredAndFinish()" class="flex-1 py-3 bg-gradient-to-r from-pink-500 via-rose-400 to-purple-500 hover:opacity-90 active:scale-95 text-xs text-white font-bold rounded-2xl transition shadow-[0_4px_15px_rgba(244,114,182,0.3)] flex items-center justify-center gap-1">
+            <span>把煩惱徹底粉碎</span><span>✨</span>
           </button>
-          <button onclick="resetView()" class="px-4 py-2.5 border border-neutral-800 hover:border-neutral-700 text-xs text-neutral-400 rounded-xl transition">
+          <button onclick="resetView()" class="px-4 py-3 border border-pink-900/40 hover:bg-pink-950/30 text-xs text-pink-300/80 rounded-2xl transition">
             重抽一次
           </button>
         </div>
@@ -137,39 +144,39 @@
 
     <!-- 步驟 4：粉碎完成畫面 -->
     <div id="peaceCard" class="hidden w-full text-center z-10">
-      <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-rose-950/40 border border-rose-800/40 flex items-center justify-center text-rose-400 text-lg">⚡</div>
-      <h2 class="text-base font-bold text-neutral-200">破事已經被妳炸爛了</h2>
-      <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">氣出完了，戰略也拿到了。<br>今晚好好睡覺，明天換妳看他們笑話。</p>
-      <button onclick="resetView()" class="mt-6 px-5 py-2 border border-neutral-800 rounded-full text-xs text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 transition">還有爛人想吐槽</button>
+      <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-pink-950/40 border border-pink-500/30 flex items-center justify-center text-pink-300 text-xl shadow-lg">🕊️</div>
+      <h2 class="text-base font-bold text-pink-100">壞心情已經全部化成煙了</h2>
+      <p class="text-xs text-pink-200/60 mt-2 leading-relaxed max-w-xs mx-auto">心事說出來就輕了一半。<br>今晚抹上香香的乳液，好好鑽進被窩睡個好覺吧！</p>
+      <button onclick="resetView()" class="mt-6 px-6 py-2.5 border border-pink-800/40 rounded-full text-xs text-pink-300 hover:bg-pink-950/40 transition">還有心事想倒掉</button>
     </div>
 
     <!-- Paywall Modal -->
-    <div id="paywallModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div class="w-full max-w-sm bg-gradient-to-b from-[#1e1a26] to-[#121017] border border-rose-500/50 rounded-2xl p-6 text-center shadow-2xl relative">
-        <button onclick="closePaywall()" class="absolute top-3 right-3 text-neutral-400 hover:text-white text-lg">✕</button>
-        <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-300 text-xl">
+    <div id="paywallModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
+      <div class="w-full max-w-sm bg-gradient-to-b from-[#251a2d] to-[#15111b] border border-pink-500/40 rounded-3xl p-6 text-center shadow-2xl relative">
+        <button onclick="closePaywall()" class="absolute top-4 right-4 text-pink-300/60 hover:text-white text-lg">✕</button>
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-pink-500/20 border border-pink-400/40 flex items-center justify-center text-pink-300 text-xl">
           👑
         </div>
-        <h3 class="text-base font-bold text-neutral-100">今日發洩額度滿囉</h3>
-        <p class="text-xs text-neutral-400 mt-1.5 leading-relaxed">
-          生活已經夠苦了，別讓怨氣憋到天亮。<br>解鎖 VIP 閨蜜特權，無限吐槽到底！
+        <h3 class="text-base font-bold text-pink-100">今日專屬額度滿囉</h3>
+        <p class="text-xs text-pink-200/60 mt-1.5 leading-relaxed">
+          生活已經夠不容易了，別把煩惱憋過夜。<br>升級 VIP 閨蜜通道，隨時隨地盡情傾訴！
         </p>
 
-        <div class="my-4 p-3 bg-neutral-900/80 rounded-xl border border-neutral-800 text-left space-y-1.5 text-xs text-neutral-300">
-          <div class="flex items-center gap-1.5"><span class="text-rose-400">✓</span><span>每日無限次抽牌開噴</span></div>
-          <div class="flex items-center gap-1.5"><span class="text-rose-400">✓</span><span>解鎖星盤＋紫微全維度合參大招</span></div>
-          <div class="flex items-center gap-1.5"><span class="text-rose-400">✓</span><span>AI 深度反擊戰略書生成</span></div>
+        <div class="my-4 p-3.5 bg-[#19121d]/80 rounded-2xl border border-pink-900/30 text-left space-y-1.5 text-xs text-pink-200/80">
+          <div class="flex items-center gap-1.5"><span class="text-pink-400">✓</span><span>每日無限次抽取靈感牌陣</span></div>
+          <div class="flex items-center gap-1.5"><span class="text-pink-400">✓</span><span>解鎖星盤與深層心靈合參大招</span></div>
+          <div class="flex items-center gap-1.5"><span class="text-pink-400">✓</span><span>客製化溫柔反擊戰略書</span></div>
         </div>
 
-        <button onclick="simulatePayment()" class="w-full py-3 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 active:scale-95 text-xs text-white font-bold rounded-xl transition shadow-lg mb-2">
-          解鎖無限解惑 (NT$ 99 / 月)
+        <button onclick="simulatePayment()" class="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-90 active:scale-95 text-xs text-white font-bold rounded-2xl transition shadow-[0_4px_15px_rgba(244,114,182,0.3)] mb-2">
+          解鎖專屬閨蜜席位 (NT$ 99 / 月)
         </button>
       </div>
     </div>
   </main>
 
   <footer class="w-full max-w-md pb-3 text-center z-10">
-    <p class="text-[11px] text-neutral-500 tracking-wider">不爽就碎 · 睡飽翻盤</p>
+    <p class="text-[11px] text-pink-300/40 tracking-wider">深呼吸 · 倒掉煩惱 · 今晚好眠</p>
   </footer>
 
   <script>
@@ -199,50 +206,50 @@
     function showPaywall() { document.getElementById('paywallModal').classList.remove('hidden'); }
     function closePaywall() { document.getElementById('paywallModal').classList.add('hidden'); }
     function simulatePayment() {
-      alert("🎉 商業金流解鎖成功！");
+      alert("🎉 專屬閨蜜席位解鎖成功！");
       localStorage.setItem('tarot_count', '-999');
       updateQuotaUI();
       closePaywall();
     }
 
     const tarotDeck = [
-      { name: "愚者", icon: "🎒", keyword: "放手歸零" },
-      { name: "魔術師", icon: "🪄", keyword: "主動掌局" },
-      { name: "女祭司", icon: "📜", keyword: "冷靜觀察" },
-      { name: "皇后", icon: "👑", keyword: "自我犒賞" },
-      { name: "皇帝", icon: "🏛️", keyword: "確立界線" },
-      { name: "教皇", icon: "🕊️", keyword: "聽信忠言" },
+      { name: "愚者", icon: "🎒", keyword: "純粹出發" },
+      { name: "魔術師", icon: "🪄", keyword: "掌控全局" },
+      { name: "女祭司", icon: "📜", keyword: "直覺敏銳" },
+      { name: "皇后", icon: "👑", keyword: "滋養自己" },
+      { name: "皇帝", icon: "🏛️", keyword: "畫好邊界" },
+      { name: "教皇", icon: "🕊️", keyword: "心靈智慧" },
       { name: "戀人", icon: "💞", keyword: "忠於本心" },
-      { name: "戰車", icon: "⚔️", keyword: "破局出擊" },
-      { name: "力量", icon: "🦁", keyword: "以柔克剛" },
-      { name: "隱士", icon: "🏮", keyword: "給自留白" },
-      { name: "命運之輪", icon: "☸️", keyword: "風向轉變" },
-      { name: "正義", icon: "⚖️", keyword: "理智算帳" },
-      { name: "倒吊人", icon: "🌱", keyword: "換位沈澱" },
-      { name: "死神", icon: "🥀", keyword: "果斷割捨" },
-      { name: "節制", icon: "🏺", keyword: "平復內耗" },
-      { name: "惡魔", icon: "⛓️", keyword: "看破陷阱" },
-      { name: "高塔", icon: "⚡", keyword: "破舊立新" },
-      { name: "星星", icon: "⭐", keyword: "看見希望" },
-      { name: "月亮", icon: "🌙", keyword: "看破虛妄" },
-      { name: "太陽", icon: "☀️", keyword: "光明大勝" },
-      { name: "審判", icon: "🎺", keyword: "徹底清醒" },
+      { name: "戰車", icon: "⚔️", keyword: "勇往直前" },
+      { name: "力量", icon: "🦁", keyword: "溫柔堅定" },
+      { name: "隱士", icon: "🏮", keyword: "安靜沉澱" },
+      { name: "命運之輪", icon: "☸️", keyword: "轉機來臨" },
+      { name: "正義", icon: "⚖️", keyword: "清醒坦然" },
+      { name: "倒吊人", icon: "🌱", keyword: "換個角度" },
+      { name: "死神", icon: "🥀", keyword: "斷捨舊事" },
+      { name: "節制", icon: "🏺", keyword: "平復焦慮" },
+      { name: "惡魔", icon: "⛓️", keyword: "看清圈套" },
+      { name: "高塔", icon: "⚡", keyword: "打破束縛" },
+      { name: "星星", icon: "⭐", keyword: "重燃希望" },
+      { name: "月亮", icon: "🌙", keyword: "擁抱不安" },
+      { name: "太陽", icon: "☀️", keyword: "萬物晴朗" },
+      { name: "審判", icon: "🎺", keyword: "重新復甦" },
       { name: "世界", icon: "🌍", keyword: "圓滿完結" }
     ];
 
     const ventDeck = [
-      { text: "茶杯放毒", icon: "🍵💀", sub: "加兩滴洗潔精" },
-      { text: "飛踢後腦", icon: "🦵💥", sub: "直接踹進水溝" },
-      { text: "狠狠揍他", icon: "🥊🔥", sub: "賞兩記左勾拳" },
-      { text: "鍵盤拔光", icon: "⌨️😈", sub: "摳掉所有空白鍵" },
-      { text: "畫符咒他", icon: "📜👻", sub: "出門天天踩樂高" },
-      { text: "輪胎洩氣", icon: "🛞🪡", sub: "騎車慢慢牽回家" },
-      { text: "咖啡倒翻", icon: "☕🫠", sub: "精準潑在白襯衫" },
-      { text: "網路拔線", icon: "🔌✂️", sub: "報告打完直接斷" },
-      { text: "大聲咆哮", icon: "🗣️⚡", sub: "耳膜震裂大清醒" }
+      { text: "偷偷放毒", icon: "🧋💀", sub: "加滿微糖砒霜" },
+      { text: "飛踢後腦", icon: "🩰💥", sub: "優雅踢進水溝" },
+      { text: "賞兩巴掌", icon: "💅🔥", sub: "打醒爛人腦袋" },
+      { text: "拔光鍵盤", icon: "⌨️😈", sub: "拔掉他所有標點" },
+      { text: "畫符退散", icon: "📜👻", sub: "讓他出門踩樂高" },
+      { text: "輪胎放氣", icon: "🛞🪡", sub: "慢慢推車吹冷風" },
+      { text: "打翻奶茶", icon: "☕🫠", sub: "精準倒在白襯衫" },
+      { text: "拔掉插頭", icon: "🔌✂️", sub: "沒存檔直接黑屏" },
+      { text: "優雅白眼", icon: "🙄⚡", sub: "翻到外太空去" }
     ];
 
-    const stepLabels = ["妳之前有多冤", "現在卡在什麼盲點", "接下來怎麼帥氣翻盤"];
+    const stepLabels = ["妳之前有多委屈", "現在卡在什麼盲點", "接下來怎麼帥氣翻篇"];
     let poolCards = [];
     let pickedCards = [];
 
@@ -271,7 +278,7 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(432, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(108, audioCtx.currentTime + 3.5);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3.5);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -288,14 +295,14 @@
     resizeCanvas();
 
     function createParticles(x, y) {
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < 140; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 6 + 2;
+        const speed = Math.random() * 5 + 1.5;
         particles.push({
           x: x, y: y,
-          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1.5,
           size: Math.random() * 2.5 + 1, alpha: 1, decay: Math.random() * 0.02 + 0.015,
-          color: Math.random() > 0.4 ? '#f43f5e' : '#fb7185'
+          color: Math.random() > 0.5 ? '#f472b6' : '#e879f9'
         });
       }
     }
@@ -304,7 +311,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.alpha -= p.decay;
+        p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha -= p.decay;
         ctx.save(); ctx.globalAlpha = Math.max(0, p.alpha); ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, p.size, p.size); ctx.restore();
         if (p.alpha <= 0) particles.splice(i, 1);
@@ -363,20 +370,22 @@
 
         cardContainer.innerHTML = `
           <div class="card-inner shadow-lg" id="card-inner-${i}">
-            <div class="card-front bg-gradient-to-b from-[#241318] to-[#120f14] border border-rose-500/40 p-2 flex flex-col items-center justify-center">
+            <!-- 正面：發洩粉紫小卡 -->
+            <div class="card-front bg-gradient-to-b from-[#2c1d2e] via-[#1f1522] to-[#161019] border border-pink-400/40 p-2.5 flex flex-col items-center justify-center shadow-lg">
               <span class="text-2xl mb-1 filter drop-shadow">${item.vent.icon}</span>
-              <span class="text-[11px] text-rose-300 font-bold tracking-wider mb-0.5">${item.vent.text}</span>
-              <span class="text-[8px] text-neutral-400 bg-black/50 px-1.5 py-0.5 rounded border border-neutral-800">${item.vent.sub}</span>
-              <div class="mt-2 text-[9px] text-rose-400 font-medium">翻開 ⚡</div>
+              <span class="text-[11px] text-pink-200 font-bold tracking-wider mb-0.5">${item.vent.text}</span>
+              <span class="text-[8px] text-pink-300/60 bg-[#120d15]/60 px-2 py-0.5 rounded-full border border-pink-900/40">${item.vent.sub}</span>
+              <div class="mt-2 text-[9px] text-pink-300/80 font-medium">翻牌 ✨</div>
             </div>
-            <div class="card-back bg-gradient-to-b from-[#221319] to-[#140e13] border-2 border-rose-400/80 p-2 flex flex-col items-center justify-between shadow-[0_0_15px_rgba(244,63,94,0.25)]">
-              <span class="text-[9px] text-rose-300 tracking-widest uppercase font-bold" id="card-step-badge-${i}"></span>
+            <!-- 背面：優雅奶茶塔羅 -->
+            <div class="card-back bg-gradient-to-b from-[#241a27] to-[#17121b] border-2 border-pink-400/70 p-2 flex flex-col items-center justify-between shadow-[0_0_15px_rgba(244,114,182,0.25)]">
+              <span class="text-[9px] text-pink-300 tracking-widest uppercase font-bold" id="card-step-badge-${i}"></span>
               <div class="my-auto text-center">
                 <div class="text-2xl mb-0.5">${item.tarot.icon}</div>
-                <div class="text-[11px] text-rose-200 font-bold">${item.tarot.name}</div>
-                <div class="text-[8px] text-rose-400/80 mt-0.5">${item.tarot.keyword}</div>
+                <div class="text-[11px] text-pink-100 font-bold">${item.tarot.name}</div>
+                <div class="text-[8px] text-pink-300/70 mt-0.5">${item.tarot.keyword}</div>
               </div>
-              <span class="text-[8px] text-rose-400">✦ 姐妹指引 ✦</span>
+              <span class="text-[8px] text-pink-400/80">✦ 命運指引 ✦</span>
             </div>
           </div>
         `;
@@ -396,13 +405,13 @@
       const counter = pickedCards.length;
       document.getElementById('pickCounter').innerText = `${counter} / 3`;
       if (counter < 3) {
-        document.getElementById('pickStatus').innerText = `挑第 ${counter + 1} 個出氣符：看「${stepLabels[counter]}」`;
+        document.getElementById('pickStatus').innerText = `直覺選第 ${counter + 1} 張：看「${stepLabels[counter]}」`;
       }
     }
 
     function onCardClicked(index) {
       if (pickedCards.some(p => p.index === index)) return;
-      if (navigator.vibrate) navigator.vibrate([30, 40]);
+      if (navigator.vibrate) navigator.vibrate([25, 35]);
 
       const currentStep = pickedCards.length;
       const selectedCard = poolCards[index].tarot;
@@ -455,8 +464,8 @@
         pickedCards.forEach(p => {
           row.innerHTML += `
             <div class="flex-1">
-              <span class="text-[9px] text-neutral-400 block">${p.role}</span>
-              <span class="text-xs text-rose-300 font-bold">${p.tarot.icon} ${p.tarot.name}</span>
+              <span class="text-[9px] text-pink-300/60 block">${p.role}</span>
+              <span class="text-xs text-pink-200 font-bold">${p.tarot.icon} ${p.tarot.name}</span>
             </div>
           `;
         });
@@ -482,7 +491,7 @@
     }
 
     function shredAndFinish() {
-      if (navigator.vibrate) navigator.vibrate([50, 70, 120]);
+      if (navigator.vibrate) navigator.vibrate([40, 60, 100]);
       playSingingBowl();
 
       const prescriptionCard = document.getElementById('prescriptionCard');
