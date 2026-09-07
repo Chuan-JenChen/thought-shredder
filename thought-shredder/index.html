@@ -12,9 +12,9 @@
       touch-action: manipulation;
     }
     textarea:focus { outline: none; }
-    .fade-in { animation: fadeIn 0.6s ease-in-out; }
+    .fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
@@ -25,7 +25,7 @@
       position: relative;
       width: 100%;
       height: 100%;
-      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
       transform-style: preserve-3d;
     }
     .card-inner.flipped {
@@ -55,8 +55,7 @@
       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-[11px] text-amber-400/90">
         <span>✦</span><span>黑化發洩 × 塔羅三牌陣 × 易經指引</span><span>✦</span>
       </div>
-      <!-- 每日免費額度顯示 -->
-      <div class="text-[11px] px-2.5 py-0.5 rounded-full bg-neutral-900/80 border border-neutral-700 text-neutral-300">
+      <div class="text-[11px] px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-neutral-300">
         今日剩餘：<span id="quotaDisplay" class="text-amber-400 font-bold">2</span> 次
       </div>
     </div>
@@ -69,7 +68,7 @@
     <canvas id="particleCanvas" class="absolute inset-0 pointer-events-none z-30"></canvas>
 
     <!-- 步驟 1：輸入心事區塊 -->
-    <div id="stepInput" class="w-full bg-[#161822] border border-neutral-800/90 rounded-2xl p-5 shadow-2xl transition-all duration-500 z-10">
+    <div id="stepInput" class="w-full bg-[#161822] border border-neutral-800/90 rounded-2xl p-5 shadow-2xl transition-all duration-300 z-10">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs text-neutral-400 font-medium">把今天卡住的心事說出來</span>
         <span class="text-[11px] text-rose-400/80">心事倒進來</span>
@@ -85,7 +84,7 @@
     </div>
 
     <!-- 步驟 2：手動抽 3 張牌區塊 -->
-    <div id="stepPick" class="hidden opacity-0 w-full transition-all duration-500 z-10 text-center">
+    <div id="stepPick" class="hidden w-full z-10 text-center">
       <div class="flex items-center justify-between px-2 mb-2">
         <h3 class="text-xs font-semibold text-rose-300" id="pickStatus">請選第 1 張牌：代表「過去根源」</h3>
         <span class="text-[10px] bg-neutral-800 text-amber-400 px-2 py-0.5 rounded-full border border-neutral-700" id="pickCounter">0 / 3</span>
@@ -99,8 +98,8 @@
       </div>
     </div>
 
-    <!-- 步驟 3：東西跨維度處方箋卡片 -->
-    <div id="prescriptionCard" class="opacity-0 pointer-events-none absolute w-full transition-all duration-700 z-20">
+    <!-- 步驟 3：處方箋拍立得卡片 -->
+    <div id="prescriptionCard" class="hidden w-full z-20">
       <div class="w-full bg-gradient-to-b from-[#1a1c27] to-[#12131b] border border-neutral-700/60 rounded-2xl p-4 shadow-2xl relative overflow-hidden max-h-[82vh] overflow-y-auto">
         
         <div class="flex justify-between items-center border-b border-neutral-800/80 pb-2 mb-2">
@@ -149,7 +148,7 @@
     </div>
 
     <!-- 步驟 4：粉碎完成畫面 -->
-    <div id="peaceCard" class="opacity-0 pointer-events-none absolute transition-opacity duration-1000 text-center z-10">
+    <div id="peaceCard" class="hidden w-full text-center z-10">
       <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 text-lg">✓</div>
       <h2 class="text-base font-normal text-neutral-200">心事已隨風化盡</h2>
       <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">氣已出，卦已解，指引已明。<br>今天到此為止，安心鑽進被窩休息吧。</p>
@@ -195,13 +194,16 @@
   <script>
     const DAILY_LIMIT = 2;
 
-    // 取得今日剩餘次數
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    }
+
     function getRemainingQuota() {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayString();
       const storedDate = localStorage.getItem('tarot_date');
       let count = parseInt(localStorage.getItem('tarot_count') || '0', 10);
 
-      // 若跨日則重設
       if (storedDate !== today) {
         localStorage.setItem('tarot_date', today);
         localStorage.setItem('tarot_count', '0');
@@ -210,9 +212,8 @@
       return Math.max(0, DAILY_LIMIT - count);
     }
 
-    // 扣除一次額度
     function consumeQuota() {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayString();
       let count = parseInt(localStorage.getItem('tarot_count') || '0', 10);
       localStorage.setItem('tarot_date', today);
       localStorage.setItem('tarot_count', (count + 1).toString());
@@ -234,9 +235,8 @@
     }
 
     function simulatePayment() {
-      alert("🎉 商業金流串接中！在此可跳轉 Stripe、綠界金流或 App Store 內購付款。");
-      // 模擬付款成功解鎖 99 次
-      localStorage.setItem('tarot_count', '-99');
+      alert("🎉 商業金流解鎖成功！");
+      localStorage.setItem('tarot_count', '-999');
       updateQuotaUI();
       closePaywall();
     }
@@ -348,7 +348,7 @@
       if (particles.length > 0) requestAnimationFrame(animateParticles);
     }
 
-    // 進入抽牌前先檢查額度
+    // 步驟 1 -> 步驟 2：進入抽牌
     function goToPickStep() {
       const remaining = getRemainingQuota();
       if (remaining <= 0) {
@@ -361,6 +361,9 @@
         thoughtInput.focus();
         return;
       }
+
+      // 真正啟動抽牌，立即扣除額度
+      consumeQuota();
 
       pickedCards = [];
       const shuffledTarots = [...tarotDeck].sort(() => 0.5 - Math.random());
@@ -376,6 +379,7 @@
 
       const cardsGrid = document.getElementById('cardsGrid');
       cardsGrid.innerHTML = '';
+      cardsGrid.style.pointerEvents = 'auto';
 
       for (let i = 0; i < 6; i++) {
         const item = poolCards[i];
@@ -410,17 +414,10 @@
 
       const stepInput = document.getElementById('stepInput');
       const stepPick = document.getElementById('stepPick');
-      stepInput.style.transform = 'scale(0.95)';
-      stepInput.style.opacity = '0';
-      
-      setTimeout(() => {
-        stepInput.classList.add('hidden');
-        stepPick.classList.remove('hidden');
-        requestAnimationFrame(() => {
-          stepPick.classList.remove('opacity-0');
-          stepPick.classList.add('opacity-100');
-        });
-      }, 300);
+
+      stepInput.classList.add('hidden');
+      stepPick.classList.remove('hidden');
+      stepPick.classList.add('fade-in');
     }
 
     function updatePickStatus() {
@@ -445,8 +442,6 @@
       updatePickStatus();
 
       if (pickedCards.length === 3) {
-        // 完成 3 張抽取，扣除 1 次額度
-        consumeQuota();
         finishPickingAndAnalyze();
       }
     }
@@ -491,18 +486,13 @@
           const stepPick = document.getElementById('stepPick');
           const prescriptionCard = document.getElementById('prescriptionCard');
 
-          stepPick.classList.remove('opacity-100');
-          stepPick.classList.add('opacity-0');
-          
-          setTimeout(() => {
-            stepPick.classList.add('hidden');
-            loadingText.classList.add('hidden');
-            cardsGrid.style.pointerEvents = 'auto';
+          stepPick.classList.add('hidden');
+          loadingText.classList.add('hidden');
+          cardsGrid.style.pointerEvents = 'auto';
 
-            prescriptionCard.classList.remove('opacity-0', 'pointer-events-none');
-            prescriptionCard.classList.add('opacity-100', 'pointer-events-auto', 'fade-in');
-          }, 400);
-        }, 1500);
+          prescriptionCard.classList.remove('hidden');
+          prescriptionCard.classList.add('fade-in');
+        }, 1200);
 
       } catch (e) {
         console.error("會診失敗:", e);
@@ -521,19 +511,14 @@
       createParticles(rect.left - parentRect.left + rect.width / 2, rect.top - parentRect.top + rect.height / 2);
       animateParticles();
 
-      prescriptionCard.style.transform = 'scale(0.8) translateY(-20px)';
-      prescriptionCard.style.opacity = '0';
-      prescriptionCard.style.pointerEvents = 'none';
-
-      setTimeout(() => {
-        const peaceCard = document.getElementById('peaceCard');
-        peaceCard.classList.remove('opacity-0', 'pointer-events-none');
-        peaceCard.classList.add('opacity-100', 'pointer-events-auto');
-      }, 600);
+      prescriptionCard.classList.add('hidden');
+      const peaceCard = document.getElementById('peaceCard');
+      peaceCard.classList.remove('hidden');
+      peaceCard.classList.add('fade-in');
     }
 
+    // 重設回最初輸入畫面
     function resetView() {
-      // 若額度用完，再次點擊時提示付費
       if (getRemainingQuota() <= 0) {
         showPaywall();
         return;
@@ -543,34 +528,18 @@
       pickedCards = [];
       poolCards = [];
 
-      const peaceCard = document.getElementById('peaceCard');
-      const prescriptionCard = document.getElementById('prescriptionCard');
-      const stepPick = document.getElementById('stepPick');
-      const stepInput = document.getElementById('stepInput');
+      document.getElementById('peaceCard').classList.add('hidden');
+      document.getElementById('prescriptionCard').classList.add('hidden');
+      document.getElementById('stepPick').classList.add('hidden');
+      document.getElementById('loadingText').classList.add('hidden');
+
       const cardsGrid = document.getElementById('cardsGrid');
-      const loadingText = document.getElementById('loadingText');
-
-      cardsGrid.style.pointerEvents = 'auto';
       cardsGrid.innerHTML = '';
-      loadingText.classList.add('hidden');
+      cardsGrid.style.pointerEvents = 'auto';
 
-      peaceCard.classList.remove('opacity-100', 'pointer-events-auto');
-      peaceCard.classList.add('opacity-0', 'pointer-events-none');
-
-      prescriptionCard.classList.remove('opacity-100', 'pointer-events-auto');
-      prescriptionCard.classList.add('opacity-0', 'pointer-events-none');
-      prescriptionCard.style.transform = 'scale(1) translateY(0)';
-
-      stepPick.classList.add('hidden');
-      stepPick.classList.remove('opacity-100');
-      stepPick.classList.add('opacity-0');
-
+      const stepInput = document.getElementById('stepInput');
       stepInput.classList.remove('hidden');
-      requestAnimationFrame(() => {
-        stepInput.style.transform = 'scale(1)';
-        stepInput.style.opacity = '1';
-        stepInput.style.pointerEvents = 'auto';
-      });
+      stepInput.classList.add('fade-in');
     }
   </script>
 </body>
