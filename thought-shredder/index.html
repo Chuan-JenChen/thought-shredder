@@ -18,7 +18,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
     
-    /* 3D 翻轉卡片容器 */
     .card-container {
       perspective: 1000px;
     }
@@ -52,8 +51,14 @@
 
   <!-- 頂部標題與金句 -->
   <header class="w-full max-w-md pt-3 text-center z-10">
-    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-[11px] text-amber-400/90 mb-2">
-      <span>✦</span><span>黑化發洩 × 塔羅三牌陣 × 易經指引</span><span>✦</span>
+    <div class="flex items-center justify-between px-2 mb-2">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-[11px] text-amber-400/90">
+        <span>✦</span><span>黑化發洩 × 塔羅三牌陣 × 易經指引</span><span>✦</span>
+      </div>
+      <!-- 每日免費額度顯示 -->
+      <div class="text-[11px] px-2.5 py-0.5 rounded-full bg-neutral-900/80 border border-neutral-700 text-neutral-300">
+        今日剩餘：<span id="quotaDisplay" class="text-amber-400 font-bold">2</span> 次
+      </div>
     </div>
     <div class="bg-neutral-900/40 border border-neutral-800/60 rounded-xl p-2.5 backdrop-blur-sm">
       <p id="dailyQuoteText" class="text-xs text-neutral-400 font-light leading-relaxed"></p>
@@ -87,7 +92,6 @@
       </div>
       <p class="text-[11px] text-neutral-500 mb-3">背面皆為隨機出氣符咒，點擊翻開顯露命運</p>
       
-      <!-- 隨機 5 張背面供挑選 3 張 -->
       <div class="grid grid-cols-3 gap-2 w-full px-1" id="cardsGrid"></div>
       
       <div id="loadingText" class="hidden text-xs text-amber-400/90 mt-4 animate-pulse">
@@ -99,7 +103,6 @@
     <div id="prescriptionCard" class="opacity-0 pointer-events-none absolute w-full transition-all duration-700 z-20">
       <div class="w-full bg-gradient-to-b from-[#1a1c27] to-[#12131b] border border-neutral-700/60 rounded-2xl p-4 shadow-2xl relative overflow-hidden max-h-[82vh] overflow-y-auto">
         
-        <!-- 頂部卦象與標籤 -->
         <div class="flex justify-between items-center border-b border-neutral-800/80 pb-2 mb-2">
           <div class="flex items-center gap-1.5">
             <span class="text-amber-400 text-sm font-bold" id="cardIching"></span>
@@ -108,21 +111,17 @@
           <span class="text-[10px] text-neutral-400">塔羅三牌陣 · 現代解鎖</span>
         </div>
 
-        <!-- 抽取的三張牌陣小標籤 -->
         <div class="flex justify-between gap-1.5 mb-2.5 p-2 bg-neutral-900/60 rounded-xl border border-neutral-800 text-center" id="pickedCardsRow"></div>
 
-        <!-- 易經心智指引 -->
         <div class="mb-2 p-2.5 rounded-xl bg-amber-950/20 border border-amber-900/30 text-center">
           <p id="cardIchingWisdom" class="text-xs text-amber-200/95 font-medium leading-relaxed"></p>
         </div>
 
-        <!-- 塔羅牌陣總結分析 -->
         <div class="mb-2.5">
           <div class="text-[11px] text-neutral-400 mb-0.5 font-medium">【 牌陣脈絡診斷 】</div>
           <p id="cardTarotSummary" class="text-xs text-neutral-300 font-light leading-relaxed"></p>
         </div>
 
-        <!-- 緊扣心事的易經宜忌 -->
         <div class="space-y-1.5 text-xs pt-2 border-t border-neutral-800/70">
           <div class="p-2 rounded-lg bg-emerald-950/20 border border-emerald-900/30">
             <span class="text-emerald-400 font-semibold block mb-0.5">🌿 卦象宜做（針對當前情境）：</span>
@@ -138,7 +137,6 @@
           </div>
         </div>
 
-        <!-- 操作按鈕 -->
         <div class="flex gap-2 mt-3 pt-2 border-t border-neutral-800/60">
           <button onclick="shredAndFinish()" class="flex-1 py-2.5 bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-xs text-neutral-200 font-medium rounded-xl transition flex items-center justify-center gap-1">
             <span>把心事與怨念粉碎</span><span>⚡</span>
@@ -157,6 +155,37 @@
       <p class="text-xs text-neutral-400 mt-2 leading-relaxed max-w-xs mx-auto">氣已出，卦已解，指引已明。<br>今天到此為止，安心鑽進被窩休息吧。</p>
       <button onclick="resetView()" class="mt-6 px-5 py-2 border border-neutral-800 rounded-full text-xs text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 transition">還有煩惱想倒掉</button>
     </div>
+
+    <!-- 付費彈窗 Modal (Paywall) -->
+    <div id="paywallModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div class="w-full max-w-sm bg-gradient-to-b from-[#1f212f] to-[#12131b] border border-amber-500/50 rounded-2xl p-6 text-center shadow-2xl relative">
+        <button onclick="closePaywall()" class="absolute top-3 right-3 text-neutral-400 hover:text-white text-lg">✕</button>
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 text-xl">
+          👑
+        </div>
+        <h3 class="text-base font-semibold text-neutral-100">今日免費額度已用完</h3>
+        <p class="text-xs text-neutral-400 mt-1.5 leading-relaxed">
+          宇宙的能量需要沉澱。<br>升級 VIP，解鎖今日無限次抽牌與更深度的綜合命理會診！
+        </p>
+
+        <div class="my-4 p-3 bg-neutral-900/60 rounded-xl border border-neutral-800 text-left space-y-1.5 text-xs text-neutral-300">
+          <div class="flex items-center gap-1.5">
+            <span class="text-amber-400">✓</span><span>每日無限次抽取發洩牌陣</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-amber-400">✓</span><span>解鎖紫微斗數 × 西洋占星全維度會診</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-amber-400">✓</span><span>去除字數限制，生成客製化開運報告</span>
+          </div>
+        </div>
+
+        <button onclick="simulatePayment()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:scale-95 text-xs text-neutral-950 font-bold rounded-xl transition shadow-lg mb-2">
+          解鎖無限解惑 (NT$ 99 / 月)
+        </button>
+        <p class="text-[10px] text-neutral-500">隨時可取消 · 無痛退訂</p>
+      </div>
+    </div>
   </main>
 
   <footer class="w-full max-w-md pb-3 text-center z-10">
@@ -164,6 +193,54 @@
   </footer>
 
   <script>
+    const DAILY_LIMIT = 2;
+
+    // 取得今日剩餘次數
+    function getRemainingQuota() {
+      const today = new Date().toISOString().split('T')[0];
+      const storedDate = localStorage.getItem('tarot_date');
+      let count = parseInt(localStorage.getItem('tarot_count') || '0', 10);
+
+      // 若跨日則重設
+      if (storedDate !== today) {
+        localStorage.setItem('tarot_date', today);
+        localStorage.setItem('tarot_count', '0');
+        count = 0;
+      }
+      return Math.max(0, DAILY_LIMIT - count);
+    }
+
+    // 扣除一次額度
+    function consumeQuota() {
+      const today = new Date().toISOString().split('T')[0];
+      let count = parseInt(localStorage.getItem('tarot_count') || '0', 10);
+      localStorage.setItem('tarot_date', today);
+      localStorage.setItem('tarot_count', (count + 1).toString());
+      updateQuotaUI();
+    }
+
+    function updateQuotaUI() {
+      const remaining = getRemainingQuota();
+      document.getElementById('quotaDisplay').innerText = remaining;
+    }
+    updateQuotaUI();
+
+    function showPaywall() {
+      document.getElementById('paywallModal').classList.remove('hidden');
+    }
+
+    function closePaywall() {
+      document.getElementById('paywallModal').classList.add('hidden');
+    }
+
+    function simulatePayment() {
+      alert("🎉 商業金流串接中！在此可跳轉 Stripe、綠界金流或 App Store 內購付款。");
+      // 模擬付款成功解鎖 99 次
+      localStorage.setItem('tarot_count', '-99');
+      updateQuotaUI();
+      closePaywall();
+    }
+
     const tarotDeck = [
       { name: "愚者", icon: "🎒", keyword: "重新歸零 · 信任直覺" },
       { name: "魔術師", icon: "🪄", keyword: "主動創造 · 掌控局面" },
@@ -271,8 +348,14 @@
       if (particles.length > 0) requestAnimationFrame(animateParticles);
     }
 
-    // 步驟 1 -> 2：產生隨機發洩背面牌池（6 張供任選 3 張）
+    // 進入抽牌前先檢查額度
     function goToPickStep() {
+      const remaining = getRemainingQuota();
+      if (remaining <= 0) {
+        showPaywall();
+        return;
+      }
+
       const thoughtInput = document.getElementById('thoughtInput');
       if (!thoughtInput.value.trim()) {
         thoughtInput.focus();
@@ -283,7 +366,6 @@
       const shuffledTarots = [...tarotDeck].sort(() => 0.5 - Math.random());
       const shuffledVents = [...ventDeck].sort(() => 0.5 - Math.random());
 
-      // 產生 6 張混搭卡片牌池
       poolCards = [];
       for (let i = 0; i < 6; i++) {
         poolCards.push({
@@ -304,15 +386,12 @@
 
         cardContainer.innerHTML = `
           <div class="card-inner shadow-lg" id="card-inner-${i}">
-            <!-- 隨機發洩背面 -->
             <div class="card-front bg-gradient-to-b from-[#241318] to-[#120f14] border border-rose-500/40 p-2 flex flex-col items-center justify-center">
               <span class="text-2xl mb-1 filter drop-shadow">${item.vent.icon}</span>
               <span class="text-[11px] text-rose-300 font-bold tracking-wider mb-0.5">${item.vent.text}</span>
               <span class="text-[8px] text-neutral-400 bg-black/50 px-1.5 py-0.5 rounded border border-neutral-800">${item.vent.sub}</span>
               <div class="mt-2 text-[9px] text-amber-400/80 font-medium">翻開 ⚡</div>
             </div>
-
-            <!-- 塔羅正面 -->
             <div class="card-back bg-gradient-to-b from-[#211d13] to-[#11100b] border-2 border-amber-400/70 p-2 flex flex-col items-center justify-between shadow-[0_0_15px_rgba(245,158,11,0.2)]">
               <span class="text-[9px] text-amber-400 tracking-widest uppercase font-semibold" id="card-step-badge-${i}"></span>
               <div class="my-auto text-center">
@@ -352,7 +431,6 @@
       }
     }
 
-    // 點擊翻牌邏輯
     function onCardClicked(index) {
       if (pickedCards.some(p => p.index === index)) return;
       if (navigator.vibrate) navigator.vibrate([30, 40]);
@@ -361,14 +439,14 @@
       const selectedCard = poolCards[index].tarot;
       pickedCards.push({ index, tarot: selectedCard, role: stepPositions[currentStep] });
 
-      // 標註順位徽章並 3D 翻轉
       document.getElementById(`card-step-badge-${index}`).innerText = stepPositions[currentStep];
       document.getElementById(`card-inner-${index}`).classList.add('flipped');
 
       updatePickStatus();
 
-      // 抽滿 3 張，開始呼叫 AI 東西會診
       if (pickedCards.length === 3) {
+        // 完成 3 張抽取，扣除 1 次額度
+        consumeQuota();
         finishPickingAndAnalyze();
       }
     }
@@ -391,7 +469,6 @@
 
         const data = await response.json();
 
-        // 填入東西會診處方箋
         document.getElementById('cardIching').innerText = data.ichingName || "地火明夷卦 ䷣";
         document.getElementById('cardIchingWisdom').innerText = `「 ${data.ichingWisdom || "韜光養晦，不拿別人的混亂懲罰自己。"} 」`;
         document.getElementById('cardTarotSummary').innerText = data.tarotSummary || "三張牌展現了這段心事的起承轉合。";
@@ -399,7 +476,6 @@
         document.getElementById('avoidAction').innerText = data.avoidAction || "在深夜裡苛責自己哪裡沒做好。";
         document.getElementById('luckyVibe').innerText = data.luckyVibe || "溫柔淺色系衣著，搭配純銀小飾品。";
 
-        // 渲染選中的三張牌
         const row = document.getElementById('pickedCardsRow');
         row.innerHTML = '';
         pickedCards.forEach(p => {
@@ -411,7 +487,6 @@
           `;
         });
 
-        // 停留 1.5 秒讓使用者看完整個牌陣，切換到處方箋
         setTimeout(() => {
           const stepPick = document.getElementById('stepPick');
           const prescriptionCard = document.getElementById('prescriptionCard');
@@ -458,13 +533,26 @@
     }
 
     function resetView() {
+      // 若額度用完，再次點擊時提示付費
+      if (getRemainingQuota() <= 0) {
+        showPaywall();
+        return;
+      }
+
       document.getElementById('thoughtInput').value = '';
       pickedCards = [];
-      
+      poolCards = [];
+
       const peaceCard = document.getElementById('peaceCard');
       const prescriptionCard = document.getElementById('prescriptionCard');
       const stepPick = document.getElementById('stepPick');
       const stepInput = document.getElementById('stepInput');
+      const cardsGrid = document.getElementById('cardsGrid');
+      const loadingText = document.getElementById('loadingText');
+
+      cardsGrid.style.pointerEvents = 'auto';
+      cardsGrid.innerHTML = '';
+      loadingText.classList.add('hidden');
 
       peaceCard.classList.remove('opacity-100', 'pointer-events-auto');
       peaceCard.classList.add('opacity-0', 'pointer-events-none');
@@ -481,6 +569,7 @@
       requestAnimationFrame(() => {
         stepInput.style.transform = 'scale(1)';
         stepInput.style.opacity = '1';
+        stepInput.style.pointerEvents = 'auto';
       });
     }
   </script>
