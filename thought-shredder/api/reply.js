@@ -36,11 +36,11 @@ export default async function handler(req, res) {
   "outfitVibe": "建議的戰袍/妝容/氣場指南（例如：全黑墨鏡酷妹裝，讓討厭的人連看妳一眼都覺得自己不配）"
 }`;
 
-  // 採用官方支援的穩定模型
-  const targetModel = "gemini-2.5-flash";
+  // 依照 Google 官方要求鎖定 gemini-3.6-flash
+  const targetModel = "gemini-3.6-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
 
-  // 遇到 Google 尖峰 503/429 時自動等待重試最多 3 次
+  // 遇到 High Demand (503/429) 自動重試 3 次
   const maxRetries = 3;
   let lastError = null;
 
@@ -62,11 +62,11 @@ export default async function handler(req, res) {
 
       if (!response.ok) {
         lastError = data?.error?.message || `HTTP ${response.status}`;
-        console.warn(`[API Attempt ${attempt}] 呼叫未成功:`, lastError);
-        
-        // 若遇到 High demand / Rate limit，等待後重試
-        if (response.status === 503 || response.status === 429) {
-          await new Promise(resolve => setTimeout(resolve, attempt * 1500));
+        console.warn(`[Attempt ${attempt}] 模型回應錯誤:`, lastError);
+
+        // 若為 Google 流量過載或限速，自動等候並重試
+        if (response.status === 503 || response.status === 429 || lastError.includes("high demand")) {
+          await new Promise(resolve => setTimeout(resolve, attempt * 1200));
           continue;
         }
         break;
@@ -74,7 +74,7 @@ export default async function handler(req, res) {
 
       const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) {
-        lastError = "模型未回傳文字";
+        lastError = "模型回傳內容為空";
         continue;
       }
 
@@ -84,13 +84,13 @@ export default async function handler(req, res) {
 
     } catch (err) {
       lastError = err.message;
-      console.warn(`[API Attempt ${attempt}] 連線異常:`, err.message);
-      await new Promise(resolve => setTimeout(resolve, attempt * 1200));
+      console.warn(`[Attempt ${attempt}] 連線異常:`, err.message);
+      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
     }
   }
 
-  return res.status(500).json({
-    error: "閨蜜連線失敗",
-    details: `Google 服務暫時壅塞 (${lastError})，請稍候重試`
+  return res.status(503).json({
+    error: "閨蜜連線稍有壅塞",
+    details: `Google API 暫時負載過高 (${lastError})，請再點一次！`
   });
 }
