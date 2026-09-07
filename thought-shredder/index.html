@@ -94,7 +94,7 @@
       <div class="grid grid-cols-3 gap-2 w-full px-1" id="cardsGrid"></div>
       
       <div id="loadingText" class="hidden text-xs text-amber-400/90 mt-4 animate-pulse">
-        ✦ 三牌陣已成，正在結合易經爻象為妳調配解藥...
+        ✦ 三牌陣已成，Gemini 3.6 正在結合易經爻象為妳調配解藥...
       </div>
     </div>
 
@@ -348,12 +348,10 @@
       if (particles.length > 0) requestAnimationFrame(animateParticles);
     }
 
-    // 步驟 1 -> 步驟 2：進入抽牌
     function goToPickStep() {
       const thoughtInput = document.getElementById('thoughtInput');
       const val = thoughtInput.value.trim();
 
-      // 開發者密碼指令：直接重置次數
       if (val === 'jj20061210') {
         localStorage.removeItem('tarot_date');
         localStorage.removeItem('tarot_count');
@@ -374,7 +372,6 @@
         return;
       }
 
-      // 真正啟動抽牌，立即扣除額度
       consumeQuota();
 
       pickedCards = [];
@@ -476,12 +473,19 @@
 
         const data = await response.json();
 
-        document.getElementById('cardIching').innerText = data.ichingName || "地火明夷卦 ䷣";
-        document.getElementById('cardIchingWisdom').innerText = `「 ${data.ichingWisdom || "韜光養晦，不拿別人的混亂懲罰自己。"} 」`;
-        document.getElementById('cardTarotSummary').innerText = data.tarotSummary || "三張牌展現了這段心事的起承轉合。";
-        document.getElementById('luckyAction').innerText = data.luckyAction || "把今天的工作進度條儲存好，準時離開辦公室。";
-        document.getElementById('avoidAction').innerText = data.avoidAction || "在深夜裡苛責自己哪裡沒做好。";
-        document.getElementById('luckyVibe').innerText = data.luckyVibe || "溫柔淺色系衣著，搭配純銀小飾品。";
+        if (!response.ok || data.error) {
+          alert("AI 生成異常：" + (data.details || data.error || "請檢查 API Key"));
+          loadingText.classList.add('hidden');
+          cardsGrid.style.pointerEvents = 'auto';
+          return;
+        }
+
+        document.getElementById('cardIching').innerText = data.ichingName;
+        document.getElementById('cardIchingWisdom').innerText = `「 ${data.ichingWisdom} 」`;
+        document.getElementById('cardTarotSummary').innerText = data.tarotSummary;
+        document.getElementById('luckyAction').innerText = data.luckyAction;
+        document.getElementById('avoidAction').innerText = data.avoidAction;
+        document.getElementById('luckyVibe').innerText = data.luckyVibe;
 
         const row = document.getElementById('pickedCardsRow');
         row.innerHTML = '';
@@ -504,10 +508,11 @@
 
           prescriptionCard.classList.remove('hidden');
           prescriptionCard.classList.add('fade-in');
-        }, 1200);
+        }, 1000);
 
       } catch (e) {
         console.error("會診失敗:", e);
+        alert("網路連線錯誤，請稍後再試！");
         loadingText.classList.add('hidden');
         cardsGrid.style.pointerEvents = 'auto';
       }
@@ -529,7 +534,6 @@
       peaceCard.classList.add('fade-in');
     }
 
-    // 重設回最初輸入畫面
     function resetView() {
       if (getRemainingQuota() <= 0) {
         showPaywall();

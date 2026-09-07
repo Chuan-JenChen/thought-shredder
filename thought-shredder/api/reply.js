@@ -5,85 +5,87 @@ export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEY is missing" });
+    return res.status(500).json({ error: "伺服器環境變數缺少 GEMINI_API_KEY" });
   }
 
+  // 易經核心轉化卦庫
   const ichingGuaList = [
-    { name: "地水師卦", symbol: "䷆", essence: "處變不驚、以退為進、紀律整頓" },
+    { name: "地水師卦", symbol: "䷆", essence: "處變不驚、整頓自律、以退為進" },
     { name: "水火既濟卦", symbol: "䷾", essence: "事態已定、守成為上、防微杜漸" },
-    { name: "地火明夷卦", symbol: "䷣", essence: "韜光養晦、隱藏鋒芒、自保為先" },
-    { name: "雷天大壯卦", symbol: "䷡", essence: "聲勢浩大、止住衝動、克制剛烈" },
+    { name: "地火明夷卦", symbol: "䷣", essence: "韜光養晦、收斂鋒芒、暗中積蓄" },
+    { name: "雷天大壯卦", symbol: "䷡", essence: "聲勢浩大、切忌剛愎、克制衝動" },
     { name: "風雷益卦", symbol: "䷩", essence: "借力使力、主動突破、利益共好" },
-    { name: "澤火革卦", symbol: "䷰", essence: "徹底變革、斷然割捨、破舊立新" },
-    { name: "天風姤卦", symbol: "䷫", essence: "不期而遇、防範小人、冷靜觀察" },
-    { name: "水雷屯卦", symbol: "䷂", essence: "萬事起頭難、積蓄力量、切勿躁進" }
+    { name: "澤火革卦", symbol: "䷰", essence: "果斷變革、打破舊習、破舊立新" },
+    { name: "天風姤卦", symbol: "䷫", essence: "邂逅突發、防範暗箭、謹慎觀察" },
+    { name: "水雷屯卦", symbol: "䷂", essence: "萬事起頭、厚積薄發、切勿急躁" }
   ];
 
   const randomGua = ichingGuaList[Math.floor(Math.random() * ichingGuaList.length)];
-  const selectedCards = cards && cards.length === 3 ? cards : [
-    { name: "愚者", keyword: "純粹出發" },
-    { name: "節制", keyword: "調和情緒" },
-    { name: "世界", keyword: "圓滿完結" }
-  ];
+  const card1 = cards?.[0] || { name: "力量", keyword: "以柔克剛" };
+  const card2 = cards?.[1] || { name: "惡魔", keyword: "慾望束縛" };
+  const card3 = cards?.[2] || { name: "愚者", keyword: "純粹出發" };
 
-  const prompt = `妳是一位融合「西方心理塔羅」與「東方易經哲學」的資深現代諮商師。
-使用者剛剛吐露了內心的煩惱或遭遇：「${thought || "覺得生活與職場充滿無力感與內耗"}」。
+  const prompt = `妳是一位融合「西方現代心理塔羅」與「東方易經哲理」的毒舌又溫暖的當代諮商師。
+使用者的煩心事或情緒是：「${thought || "無特定文字，覺得身心俱疲、職場或生活卡住"}」。
 
-使用者親手抽出的三張塔羅牌分別是：
-1. 過去/根源：${selectedCards[0].name}（${selectedCards[0].keyword}）
-2. 現狀/盲點：${selectedCards[1].name}（${selectedCards[1].keyword}）
-3. 未來/轉機：${selectedCards[2].name}（${selectedCards[2].keyword}）
+使用者抽出的三張塔羅牌（過去、現在、未來）：
+1. 過去根源：${card1.name}（能量：${card1.keyword}）
+2. 現狀盲點：${card2.name}（能量：${card2.keyword}）
+3. 未來轉機：${card3.name}（能量：${card3.keyword}）
 
-搭配推導出的易經卦象為：${randomGua.name} ${randomGua.symbol}（核心哲理：${randomGua.essence}）。
+推算出的易經卦象為：${randomGua.name} ${randomGua.symbol}（象徵：${randomGua.essence}）。
 
-請依據使用者的煩心事，將這三張塔羅的脈絡與易經卦象深度揉合，產出一份專屬的「東西會診解惑處方」。
-特別注意：【易經宜忌】絕對不要講生硬的古文玄學，必須【直接緊扣使用者剛才講的具體人事物】給出極為具體的操作指引！
+【嚴格指令】：
+1. 禁止給任何模板化或罐頭空話！每一次生成必須【完全客製化】。
+2. 塔羅診斷必須具體點出「${card1.name}」、「${card2.name}」與「${card3.name}」如何在她的心事中產生作用。
+3. 【宜做】與【忌做】必須極度接地氣，緊扣她所描述的「${thought || "當前卡點"}」，給出具體生活行動指引。
 
-請直接回傳嚴格的 JSON 格式（不要使用 Markdown 標記如 \`\`\`json，只要純 JSON 字串）：
+請直接回傳純 JSON 字串（禁止使用 Markdown 程式碼區塊標記如 \`\`\`json，禁止任何開頭結尾額外文字）：
 {
   "ichingName": "${randomGua.name} ${randomGua.symbol}",
-  "tarotSummary": "用2句話串連這3張塔羅牌，講出使用者過去卡點、現在內耗核心與即將迎來的轉機",
-  "ichingWisdom": "將該卦象轉化為一句給使用者的造就勸勉",
-  "luckyAction": "【極度貼近使用者情境的宜做事項】（例如：若抱怨主管，寫出『明天把所有工作交付紀錄備份到隨身碟，保持客套不多做辯解』）",
-  "avoidAction": "【極度貼近使用者情境的忌做事項】（例如：若抱怨感情，寫出『深夜11點後不要回傳長篇文字訊息自證清白』）",
-  "luckyVibe": "建議的幸運色調與一件轉換磁場的小物件/穿搭"
+  "ichingWisdom": "結合${randomGua.name}卦象與她的煩惱，給出一句直擊靈魂、讓她徹底轉念的造就金句",
+  "tarotSummary": "用2-3句話串連 ${card1.name}、${card2.name}、${card3.name}，解析她從過去怎麼走到現在卡關，接下來該如何翻篇",
+  "luckyAction": "一項今天或明天立即可執行的具體行動（必須貼合她的心事與卦象，禁止空泛）",
+  "avoidAction": "一項今天千萬別踩雷的情緒衝動行為（必須貼合她的心事與卦象，禁止空泛）",
+  "luckyVibe": "建議的專屬開運色調與一件轉變磁場的隨身小物或穿搭"
 }`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json" }
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.9
+        }
       })
     });
 
     const data = await response.json();
-    if (!response.ok || data.error) {
-      console.error("Gemini API Error:", data.error);
-      return res.status(200).json({
-        ichingName: `${randomGua.name} ${randomGua.symbol}`,
-        tarotSummary: "妳過去投入了太多心力，現在正處於能量耗竭的轉折期。別急，風向即將轉變。",
-        ichingWisdom: "天道有常，不拿別人的混亂折磨自己的心智。",
-        luckyAction: "關閉工作群組通知，提早下班洗個熱水澡",
-        avoidAction: "在情緒上頭時正面辯解或發社群限動",
-        luckyVibe: "淺灰或米白棉質穿搭，搭配溫暖木質香調"
+
+    if (!response.ok) {
+      console.error("Gemini API 回傳錯誤碼:", response.status, data);
+      return res.status(500).json({ 
+        error: "Gemini API 請求失敗", 
+        details: data?.error?.message || "請確認 Vercel 後台 GEMINI_API_KEY 是否有效" 
       });
     }
 
-    const textContent = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return res.status(200).json(JSON.parse(textContent));
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) {
+      throw new Error("Gemini 沒有回傳文字內容");
+    }
 
-  } catch (error) {
-    console.error("伺服器處理失敗:", error);
-    return res.status(200).json({
-      ichingName: `${randomGua.name} ${randomGua.symbol}`,
-      tarotSummary: "三張牌顯示妳在迷局中承擔了過多責任，當前的卡頓只是暫時的沉澱。",
-      ichingWisdom: "退一步並非示弱，而是讓能量重新歸位。",
-      luckyAction: "列出今天最煩的一件事，然後把它從待辦事項劃掉",
-      avoidAction: "過度揣摩身邊人的語氣與臉色",
-      luckyVibe: "深藍或燕麥色系，佩戴微小金屬配件穩住氣場"
-    });
+    const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleanJson);
+    return res.status(200).json(parsed);
+
+  } catch (err) {
+    console.error("處理出錯:", err);
+    return res.status(500).json({ error: "AI 生成失敗", message: err.message });
   }
 }
