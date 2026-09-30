@@ -28,15 +28,12 @@ logging.basicConfig(
     ]
 )
 
-# ==========================================
-# 核心設定與 API 金鑰
-# ==========================================
-DID_API_KEY = "Z29vZ2xlLW9hdXRoMnwxMTU5NzY0Mzg2NTQ0NDYyNjU5NjBAYWtfY01WaldwR1FIWW1CMDRCR0JoQWJN:0NxD998Y7eFPQOjKCP5E-"
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
 
 BG_IMAGE = "bg.jpg"
 OUTPUT_DIR = "daily_outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 
 TODAY_STR = datetime.now().strftime("%Y%m%d")
 FINAL_OUTPUT_MP4 = os.path.join(OUTPUT_DIR, f"news_{TODAY_STR}.mp4")
