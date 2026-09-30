@@ -1,0 +1,21 @@
+# 1. 敏感金鑰 (絕對不上傳)
+.env
+
+# 2. 影片、音訊與圖片生成素材 (不上傳)
+*.mp4
+*.mp3
+*.wav
+temp_event.jpg
+event_motion.mp4
+
+# 3. 自動生成的新聞文案、文字暫存與日誌
+*.txt
+*.log
+ai_video_pipeline_log/
+
+# 4. 產出成片資料夾
+daily_outputs/
+
+# 5. Python 暫存快取
+__pycache__/
+*.pyc

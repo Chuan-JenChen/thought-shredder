@@ -1,191 +1,259 @@
-import os
-import asyncio
-import numpy as np
+# 1. 舊版 MoviePy 與新版 Pillow 相容性補丁
 from PIL import Image, ImageDraw, ImageFont
-import edge_tts
-from gradio_client import Client, handle_file
+if not hasattr(Image, 'ANTIALIAS'):
+    Image.ANTIALIAS = Image.Resampling.LANCZOS
+
+import os
+import glob
+import time
+import json
+import logging
+import urllib.parse
+import requests
+import feedparser
+import numpy as np
+from datetime import datetime, timedelta
 from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
 
 # ==========================================
-# 1. 講稿與電視台設定 (隨時可自由修改)
+# 記錄日誌 (Logging) 設定
 # ==========================================
-NEWS_CHANNEL = "AI NEWS 24"                     # 電視台名稱
-NEWS_HEADLINE = "【焦點快訊】AI 虛擬主播系統正式上線"  # 新聞主標題
-NEWS_TICKER = "今日重大突破！全自動短影音產線成型，畫面與語音即時精確同步..."  # 跑馬摘要
-
-# 主播播報詞
-SPEECH_SCRIPT = (
-    "各位觀眾晚安，歡迎收看焦點新聞。"
-    "今天為您帶來最新科技突破，AI 虛擬主播系統已順利完成端到端自動化整合。"
-    "未來將能即時為大家帶來最快、最精準的新聞播報，請持續鎖定我們的報導。"
+LOG_FILE = "pipeline_log"
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding="utf-8"),
+        logging.StreamHandler()
+    ]
 )
 
-VOICE_NAME = "zh-TW-HsiaoChenNeural"  # 台灣親切主播女聲 (男主播可換: zh-TW-YunJheNeural)
-AVATAR_IMAGE = "anchor.png"
+# ==========================================
+# 核心設定與 API 金鑰
+# ==========================================
+DID_API_KEY = "Z29vZ2xlLW9hdXRoMnwxMTU5NzY0Mzg2NTQ0NDYyNjU5NjBAYWtfY01WaldwR1FIWW1CMDRCR0JoQWJN:0NxD998Y7eFPQOjKCP5E-"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
 BG_IMAGE = "bg.jpg"
-AUDIO_FILE = "speech.mp3"
-OUTPUT_FILE = "my_news_broadcast.mp4"
+OUTPUT_DIR = "daily_outputs"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+TODAY_STR = datetime.now().strftime("%Y%m%d")
+FINAL_OUTPUT_MP4 = os.path.join(OUTPUT_DIR, f"news_{TODAY_STR}.mp4")
+EVENT_IMG_FILE = "temp_event.jpg"
 
 VIDEO_WIDTH = 1280
 VIDEO_HEIGHT = 720
-BUBBLE_SIZE = 260                     # 主播圓框直徑
+RIGHT_BOX_X, RIGHT_BOX_Y = 435, 46
+RIGHT_BOX_W, RIGHT_BOX_H = 800, 505
+LEFT_BOX_X, LEFT_BOX_Y = 36, 175
+LEFT_BOX_W = 345
+
+ENABLE_YOUTUBE_UPLOAD = False  # 待拿到 Google client_secrets.json 後改為 True
 
 # ==========================================
-# 2. 模組：微軟台灣腔語音合成 (完全免費)
+# 功能：自動清理超過 7 天的歷史影片
 # ==========================================
-async def generate_speech():
-    print("🎙️ [1/4] 正在產生專業主播語音...")
-    communicate = edge_tts.Communicate(SPEECH_SCRIPT, VOICE_NAME)
-    await communicate.save(AUDIO_FILE)
-    print("✅ 語音產生完畢！")
-
-# ==========================================
-# 3. 模組：雲端對嘴驅動 (Hugging Face 免費算力)
-# ==========================================
-def generate_talking_avatar():
-    print("🤖 [2/4] 連線雲端免費 GPU 運算主播動態 (約 1~2 分鐘，請稍候)...")
-    client = Client("vinthony/SadTalker")
-    result = client.predict(
-        source_image=handle_file(AVATAR_IMAGE),
-        driven_audio=handle_file(AUDIO_FILE),
-        preprocess="crop",
-        still_mode=True,       # 固定主播坐姿，嚴肅專業
-        use_enhancer=False,
-        batch_size=2,
-        size=256,
-        pose_style=0,
-        facerender="facevid2vid",
-        api_name="/continual"
-    )
-    print("✅ 主播動態生成成功！")
-    return result
-
-# ==========================================
-# 4. 模組：生成「專業電視新聞台鏡面貼圖」
-# ==========================================
-def get_chinese_font(size):
-    """自動尋找 Windows 內建微軟正黑體，確保不亂碼"""
-    font_paths = [
-        "C:/Windows/Fonts/msjhbd.ttc",  # 微軟正黑體 (粗體)
-        "C:/Windows/Fonts/msjh.ttc",    # 微軟正黑體
-        "C:/Windows/Fonts/simhei.ttf",  # 黑體
-    ]
-    for p in font_paths:
-        if os.path.exists(p):
+def cleanup_old_videos(keep_days=7):
+    logging.info(f"🧹 開始檢查歷史影片，僅保留最近 {keep_days} 天...")
+    now = datetime.now()
+    cutoff_time = now - timedelta(days=keep_days)
+    
+    mp4_files = glob.glob(os.path.join(OUTPUT_DIR, "*.mp4"))
+    deleted_count = 0
+    for file_path in mp4_files:
+        file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+        if file_mtime < cutoff_time:
             try:
-                return ImageFont.truetype(p, size)
-            except Exception:
-                pass
-    return ImageFont.load_default()
+                os.remove(file_path)
+                deleted_count += 1
+                logging.info(f"   已刪除過期影片: {os.path.basename(file_path)}")
+            except Exception as e:
+                logging.error(f"   刪除檔案失敗 {file_path}: {e}")
+    logging.info(f"✅ 清理完成，共刪除 {deleted_count} 支舊影片。")
 
-def create_news_graphics_overlay():
-    """繪製如同 TVBS / CNN 風格的電視新聞鏡面"""
+# ==========================================
+# 階段 1：抓取即時新聞
+# ==========================================
+def step1_fetch_news():
+    logging.info("[階段 1/5] 抓取即時新聞 RSS...")
+    rss_url = "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    feed = feedparser.parse(rss_url)
+    if not feed.entries:
+        raise RuntimeError("無法連線至新聞 RSS 源！")
+    
+    top_entry = feed.entries[0]
+    raw_title = top_entry.title.split(" - ")[0].strip()
+    raw_summary = top_entry.get("summary", "")
+    logging.info(f"   今日頭條新聞：{raw_title}")
+    return raw_title, raw_summary
+
+# ==========================================
+# 階段 2：生成主播講稿
+# ==========================================
+def step2_generate_script(title, summary):
+    logging.info("[階段 2/5] 生成主播播報稿與跑馬燈...")
+    if GEMINI_API_KEY:
+        try:
+            from google import genai
+            client = genai.Client(api_key=GEMINI_API_KEY)
+            prompt = (
+                f"你是一位專業電視新聞主播。根據這則新聞標題：『{title}』，"
+                "請生成一份約 60~80 字、口吻專業自然的電視新聞播報稿，"
+                "開頭須有『各位觀眾好，歡迎收看焦點新聞』，結尾有感謝收看。"
+            )
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+            script_text = response.text.replace("\n", "").strip()
+            ticker_title = title[:28]
+            return ticker_title, script_text
+        except Exception as e:
+            logging.warning(f"LLM 呼叫失敗 ({e})，切換回標準主播模板")
+
+    ticker_title = title[:28]
+    script_text = (
+        f"各位觀眾好，歡迎收看焦點新聞。"
+        f"今天為您聚焦最新科技進展，{title}。"
+        f"相關趨勢與市場動態持續引發關注，更多消息請持續鎖定報導，感謝您的收看。"
+    )
+    return ticker_title, script_text
+
+# ==========================================
+# 階段 3：取得新聞配圖
+# ==========================================
+def step3_get_event_image(title):
+    logging.info("[階段 3/5] 自動生成新聞事件現場配圖...")
+    clean_keyword = urllib.parse.quote(f"photorealistic news photography of {title}, dramatic lighting, 8k")
+    img_url = f"https://image.pollinations.ai/prompt/{clean_keyword}?width=800&height=500&nologo=true"
+    
+    res = requests.get(img_url, timeout=30)
+    with open(EVENT_IMG_FILE, "wb") as f:
+        f.write(res.content)
+    logging.info("✅ 事件現場配圖已下載完成。")
+    return EVENT_IMG_FILE
+
+# ==========================================
+# 階段 4：D-ID 驅動主播對嘴
+# ==========================================
+def step4_generate_anchor_talk(script_text):
+    logging.info("[階段 4/5] 呼叫 D-ID 雲端算力對嘴生成...")
+    avatar_path = None
+    for name in ["anchor.jpg", "anchor.png", "anchor.jpeg"]:
+        if os.path.exists(name):
+            avatar_path = name
+            break
+    if not avatar_path:
+        raise FileNotFoundError("找不到主播照片 (anchor.jpg 或 anchor.png)！")
+
+    url_img = "https://api.d-id.com/images"
+    headers_auth = {"accept": "application/json", "authorization": f"Basic {DID_API_KEY}"}
+    mime = "image/png" if avatar_path.lower().endswith(".png") else "image/jpeg"
+    with open(avatar_path, "rb") as f:
+        res = requests.post(url_img, files={"image": (os.path.basename(avatar_path), f, mime)}, headers=headers_auth)
+    source_url = res.json().get("url")
+
+    url_talk = "https://api.d-id.com/talks"
+    headers_talk = {"accept": "application/json", "content-type": "application/json", "authorization": f"Basic {DID_API_KEY}"}
+    payload = {
+        "script": {
+            "type": "text",
+            "provider": {"type": "microsoft", "voice_id": "zh-TW-YunJheNeural"},
+            "input": script_text
+        },
+        "source_url": source_url
+    }
+    res_talk = requests.post(url_talk, json=payload, headers=headers_talk)
+    talk_id = res_talk.json().get("id")
+    if not talk_id:
+        raise ValueError(f"D-ID 任務建立失敗: {res_talk.text}")
+
+    get_url = f"{url_talk}/{talk_id}"
+    while True:
+        status_res = requests.get(get_url, headers=headers_talk).json()
+        if status_res.get("status") == "done":
+            video_url = status_res.get("result_url")
+            v_data = requests.get(video_url).content
+            talk_mp4 = "temp_anchor_talk.mp4"
+            with open(talk_mp4, "wb") as f:
+                f.write(v_data)
+            logging.info("✅ 主播動態視訊生成下載完畢。")
+            return talk_mp4
+        elif status_res.get("status") == "error":
+            raise RuntimeError(f"D-ID 生成失敗: {status_res}")
+        time.sleep(3)
+
+# ==========================================
+# 階段 5：MoviePy 模板雙分割合成
+# ==========================================
+def step5_composite_news(talk_video_path, event_img_path, ticker_text):
+    logging.info("[階段 5/5] 進行電視鏡面雙分割排版合成...")
+    talk_clip = VideoFileClip(talk_video_path)
+    dur = talk_clip.duration
+
+    bg_clip = ImageClip(BG_IMAGE).set_duration(dur).resize((VIDEO_WIDTH, VIDEO_HEIGHT))
+    anchor_clip = talk_clip.resize(width=LEFT_BOX_W).set_position((LEFT_BOX_X, LEFT_BOX_Y))
+    event_clip = (
+        ImageClip(event_img_path)
+        .set_duration(dur)
+        .resize((RIGHT_BOX_W, RIGHT_BOX_H))
+        .set_position((RIGHT_BOX_X, RIGHT_BOX_Y))
+    )
+
     overlay = Image.new("RGBA", (VIDEO_WIDTH, VIDEO_HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
+    font_paths = ["C:/Windows/Fonts/msjhbd.ttc", "C:/Windows/Fonts/msjh.ttc", "C:/Windows/Fonts/simhei.ttf"]
+    font = None
+    for p in font_paths:
+        if os.path.exists(p):
+            font = ImageFont.truetype(p, 23)
+            break
+    if font is None:
+        font = ImageFont.load_default()
 
-    font_logo = get_chinese_font(22)
-    font_headline = get_chinese_font(28)
-    font_ticker = get_chinese_font(20)
+    draw.text((250, 584), f"【即時快訊】{ticker_text}", font=font, fill=(255, 255, 255, 255))
+    text_clip = ImageClip(np.array(overlay)).set_duration(dur)
 
-    # 1. 左上角【電視台標誌與 LIVE 標籤】
-    draw.rectangle([40, 35, 180, 75], fill=(20, 20, 20, 220))         # 深黑底
-    draw.text((50, 42), NEWS_CHANNEL, font=font_logo, fill=(255, 255, 255))
-    draw.rectangle([180, 35, 250, 75], fill=(220, 20, 60, 255))       # 紅色 LIVE 標
-    draw.text((192, 42), "LIVE", font=font_logo, fill=(255, 255, 255))
-
-    # 2. 底部雙層新聞字卡底板
-    bottom_y = 600
-    # 上層：焦點快訊紅色小膠囊 + 主標題黃/白底
-    draw.rectangle([40, bottom_y, 160, bottom_y + 40], fill=(210, 30, 30, 255))      # 紅色「快訊」標記
-    draw.text((52, bottom_y + 6), "焦點快訊", font=get_chinese_font(22), fill=(255, 255, 255))
-    
-    draw.rectangle([160, bottom_y, 940, bottom_y + 40], fill=(245, 190, 10, 245))    # 醒目黃色標題底條
-    draw.text((175, bottom_y + 4), NEWS_HEADLINE, font=font_headline, fill=(0, 0, 0)) # 黑色主標字
-
-    # 下層：半透明深藍黑色跑馬燈資訊底條
-    draw.rectangle([40, bottom_y + 40, 940, bottom_y + 80], fill=(15, 25, 45, 230))
-    draw.text((60, bottom_y + 48), NEWS_TICKER, font=font_ticker, fill=(230, 230, 230))
-
-    return np.array(overlay)
-
-# ==========================================
-# 5. 模組：主播抗鋸齒圓形遮罩與金屬外框
-# ==========================================
-def create_anchor_circle_and_ring(size, border_width=6):
-    scale = 4
-    large_size = size * scale
-    
-    # 遮罩
-    mask_img = Image.new("L", (large_size, large_size), 0)
-    draw_mask = ImageDraw.Draw(mask_img)
-    draw_mask.ellipse((0, 0, large_size, large_size), fill=255)
-    smooth_mask = mask_img.resize((size, size), Image.Resampling.LANCZOS)
-    
-    # 專業電視台白色/金屬感光圈
-    ring_img = Image.new("RGBA", (large_size, large_size), (0, 0, 0, 0))
-    draw_ring = ImageDraw.Draw(ring_img)
-    b_scaled = border_width * scale
-    draw_ring.ellipse(
-        (b_scaled//2, b_scaled//2, large_size - b_scaled//2, large_size - b_scaled//2),
-        outline=(255, 255, 255, 240),
-        width=b_scaled
-    )
-    smooth_ring = ring_img.resize((size, size), Image.Resampling.LANCZOS)
-    
-    return np.array(smooth_mask) / 255.0, np.array(smooth_ring)
-
-# ==========================================
-# 6. 核心合成 (MoviePy)
-# ==========================================
-def compose_news_video(avatar_video_path):
-    print("🎬 [3/4] 正在組合電視新聞鏡面、主播畫中畫與背景...")
-    avatar_clip = VideoFileClip(avatar_video_path)
-    dur = avatar_clip.duration
-
-    # 1. 主畫面背景 (強制縮放 1280x720)
-    bg_clip = ImageClip(BG_IMAGE).set_duration(dur).resize((VIDEO_WIDTH, VIDEO_HEIGHT))
-
-    # 2. 右下角主播泡泡
-    avatar_resized = avatar_clip.resize((BUBBLE_SIZE, BUBBLE_SIZE))
-    smooth_mask, smooth_ring = create_anchor_circle_and_ring(BUBBLE_SIZE)
-    
-    avatar_masked = avatar_resized.add_mask().set_mask(
-        ImageClip(smooth_mask, ismask=True).set_duration(dur)
-    )
-    ring_clip = ImageClip(smooth_ring).set_duration(dur)
-
-    # 定位至右下角 (右邊距 40px，下邊距 30px)
-    pos_x = VIDEO_WIDTH - BUBBLE_SIZE - 40
-    pos_y = VIDEO_HEIGHT - BUBBLE_SIZE - 30
-    avatar_final = avatar_masked.set_position((pos_x, pos_y))
-    ring_final = ring_clip.set_position((pos_x, pos_y))
-
-    # 3. 新聞台鏡面圖層 (Logo、快訊條、跑馬燈)
-    news_overlay_arr = create_news_graphics_overlay()
-    news_overlay_clip = ImageClip(news_overlay_arr).set_duration(dur)
-
-    # 4. 圖層疊加 (背景 -> 主播 -> 光圈 -> 新聞鏡面)
-    print("🚀 [4/4] 正在渲染電視新聞影片 (MP4)...")
+    logging.info("   正在渲染 MP4 成片...")
     final_video = CompositeVideoClip(
-        [bg_clip, avatar_final, ring_final, news_overlay_clip],
+        [bg_clip, event_clip, anchor_clip, text_clip],
         size=(VIDEO_WIDTH, VIDEO_HEIGHT)
-    )
-    
-    final_video.write_videofile(
-        OUTPUT_FILE,
-        fps=24,
-        codec="libx264",
-        audio_codec="aac"
-    )
-    print(f"\n🎉 恭喜！電視新聞播報短片已誕生：{os.path.abspath(OUTPUT_FILE)}")
+    ).set_audio(talk_clip.audio)
+
+    final_video.write_videofile(FINAL_OUTPUT_MP4, fps=24, codec="libx264", audio_codec="aac")
+    logging.info(f"🎉 今日新聞短片產出完成：{os.path.abspath(FINAL_OUTPUT_MP4)}")
 
 # ==========================================
-# 主程式入口
+# (預留模組) 自動上傳至 YouTube
+# ==========================================
+def step6_upload_to_youtube(video_path, title, description):
+    if not ENABLE_YOUTUBE_UPLOAD:
+        logging.info("ℹ️ YouTube 上傳開關目前為關閉狀態 (ENABLE_YOUTUBE_UPLOAD = False)，跳過上傳。")
+        return
+    logging.info("🚀 正在呼叫 YouTube Data API 上傳短片...")
+    # 後續取得 Google Cloud Client Secret 後即可開啟此處程式邏輯
+    pass
+
+# ==========================================
+# 主程式入口 (含全局錯誤捕獲與記錄)
 # ==========================================
 if __name__ == "__main__":
-    if not os.path.exists(AVATAR_IMAGE) or not os.path.exists(BG_IMAGE):
-        print(f"❌ 錯誤：專案目錄下找不到 '{AVATAR_IMAGE}' 或 '{BG_IMAGE}'，請確認圖片是否放對位置！")
-    else:
-        asyncio.run(generate_speech())
-        raw_avatar = generate_talking_avatar()
-        compose_news_video(raw_avatar)
+    start_time = time.time()
+    logging.info("==========================================")
+    logging.info("🚀 今日 AI 新聞自動化產線開始執行")
+    logging.info("==========================================")
+    
+    try:
+        cleanup_old_videos(keep_days=7)
+        title, summary = step1_fetch_news()
+        ticker_text, script = step2_generate_script(title, summary)
+        event_img = step3_get_event_image(title)
+        talk_mp4 = step4_generate_anchor_talk(script)
+        step5_composite_news(talk_mp4, event_img, ticker_text)
+        step6_upload_to_youtube(FINAL_OUTPUT_MP4, title, script)
+        
+        cost_sec = int(time.time() - start_time)
+        logging.info(f"✨ 今日產線順利完成！總耗時: {cost_sec} 秒")
+    except Exception as e:
+        logging.error(f"❌ 產線執行失敗！錯誤資訊: {str(e)}", exc_info=True)
