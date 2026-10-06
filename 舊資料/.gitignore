@@ -1,0 +1,12 @@
+# 機密
+.env
+*.env
+
+# 個人筆記（不推上 Git）
+CLAUDE.local.md
+
+# Python / Jupyter
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+venv/

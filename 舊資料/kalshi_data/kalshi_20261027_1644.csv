@@ -1,0 +1,12 @@
+﻿ticker,event_title,market_title,category,implied_prob,volume,open_interest,close_date
+KXMLBDEBUT-RCHOLOWSKY-26NOV01,Roch Cholowsky: Debut Date,"Will Roch Cholowsky play in a game for any team in the MLB before Nov 1, 2026?",Sports,0.04,19677.82,11637.84,2026-11-01
+KXRIEMANNRES-40-27JAN01,When will the Riemann Hypothesis be resolved?,Will the Riemann Hypothesis be resolved before 2027?,Science and Technology,0.1,2811.95,2266.29,2027-01-07
+KXHODGE-32-27JAN01,When will the Hodge Conjecture be resolved?,Will the Hodge Conjecture be resolved before 2027?,Science and Technology,0.11,2513.72,1789.2,2027-01-07
+KXNFLRETIRE-KCOUSINS8-2728,Kirk Cousins: Retirement,Will Kirk Cousins announce his retirement before the 2027-28 NFL season?,Sports,0.88,1541.22,774.22,2027-09-30
+KXFDAAPPROVE-MDMA-27JAN01,Will the FDA approve MDMA for PTSD?,"Will the FDA approve midomafetamine / MDMA for PTSD before Jan 1, 2027?",Science and Technology,0.06,1286.02,671.61,2027-01-01
+KXBIRCHSWINN-32-27JAN01,When will Birch and Swinnerton-Dyer be resolved?,Will Birch and Swinnerton-Dyer be resolved before 2027?,Science and Technology,0.07,1249.94,980.0,2027-01-07
+KXNFLRETIRE-MEVANS5-2728,Mike Evans: Retirement,Will Mike Evans announce his retirement before the 2027-28 NFL season?,Sports,0.8,758.64,164.34,2027-09-30
+KXNFLRETIRE-MSTAFFORD9-2728,Matthew Stafford: Retirement,Will Matthew Stafford announce his retirement before the 2027-28 NFL season?,Sports,0.4,497.83,217.37,2027-09-30
+KXPNP-32-27JAN01,When will P vs NP be resolved?,Will P vs NP be resolved before 2027?,Science and Technology,0.97,223.66,210.08,2027-01-07
+KXYANGMILLS-32-27JAN01,When will Yang–Mills and the Mass Gap be resolved?,Will Yang–Mills and the Mass Gap be resolved before 2027?,Science and Technology,0.11,29.69,24.69,2027-01-07
+KXNFLRETIRE-ARODGERS8-27OCT01,When will Aaron Rodgers retire?,Aaron Rodgers announces his retirement from the NFL before the 2027-28 season,Sports,0.99,4.03,2.0,2027-10-01
